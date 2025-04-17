@@ -3,8 +3,8 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
-import HomeScreen from "./Home";
-import { View } from "react-native";
+import { Stack } from "expo-router";
+import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -25,9 +25,12 @@ export default function RootLayout() {
   }
 
   return (
-    <View>
-      <HomeScreen />
+    <ThemeProvider value={DarkTheme}>
+      <Stack>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="+not-found" />
+      </Stack>
       <StatusBar style="auto" />
-    </View>
+    </ThemeProvider>
   );
 }
