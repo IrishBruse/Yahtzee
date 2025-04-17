@@ -1,7 +1,5 @@
-import { StatusBar } from "expo-status-bar";
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  SafeAreaView,
   StyleSheet,
   View,
   Text,
@@ -15,18 +13,18 @@ import {
 const numbersToText = ["one", "two", "three", "four", "five", "six"];
 
 const diceImages: Record<string, ImageRequireSource> = {
-  one: require("../../assets/dice/dice_one.png"),
-  two: require("../../assets/dice/dice_two.png"),
-  three: require("../../assets/dice/dice_three.png"),
-  four: require("../../assets/dice/dice_four.png"),
-  five: require("../../assets/dice/dice_five.png"),
-  six: require("../../assets/dice/dice_six.png"),
+  one: require("../assets/dice/dice_one.png"),
+  two: require("../assets/dice/dice_two.png"),
+  three: require("../assets/dice/dice_three.png"),
+  four: require("../assets/dice/dice_four.png"),
+  five: require("../assets/dice/dice_five.png"),
+  six: require("../assets/dice/dice_six.png"),
 };
 
 const NUMBER_OF_DICE = 5;
-const NUMBER_OF_DICE_FACES = 6; // Faces are 1-6, indices 0-5
+const NUMBER_OF_DICE_FACES = 6;
 const NUMBER_OF_SCORES = 13;
-const NUMBER_OF_LOWER_SCORES = 6; // The first 6 scores (Aces to Sixes) are the upper section
+const NUMBER_OF_LOWER_SCORES = 6;
 
 const THREE_OF_A_KIND_INDEX = 6;
 const FOUR_OF_A_KIND_INDEX = 7;
@@ -36,23 +34,7 @@ const LARGE_STRAIGHT_INDEX = 10;
 const CHANCE_INDEX = 11;
 const YAHTZEE_INDEX = 12;
 
-interface ScoreNameToIndex {
-  Ones: number;
-  Twos: number;
-  Threes: number;
-  Fours: number;
-  Fives: number;
-  Sixes: number;
-  "Three of a kind": number;
-  "Four of a kind": number;
-  "Full House": number;
-  "Small Straight": number;
-  "Large Straight": number;
-  Chance: number;
-  Yahtzee: number;
-}
-
-const scoreNameToIndex: ScoreNameToIndex = {
+const scoreNameToIndex: Record<string, number> = {
   Ones: 0,
   Twos: 1,
   Threes: 2,
