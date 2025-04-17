@@ -15,12 +15,12 @@ import {
 const numbersToText = ["one", "two", "three", "four", "five", "six"];
 
 const diceImages: Record<string, ImageRequireSource> = {
-  one: require("../../assets/dice/dice_one.png"),
-  two: require("../../assets/dice/dice_two.png"),
-  three: require("../../assets/dice/dice_three.png"),
-  four: require("../../assets/dice/dice_four.png"),
-  five: require("../../assets/dice/dice_five.png"),
-  six: require("../../assets/dice/dice_six.png"),
+  one: require("../assets/dice/dice_one.png"),
+  two: require("../assets/dice/dice_two.png"),
+  three: require("../assets/dice/dice_three.png"),
+  four: require("../assets/dice/dice_four.png"),
+  five: require("../assets/dice/dice_five.png"),
+  six: require("../assets/dice/dice_six.png"),
 };
 
 const NUMBER_OF_DICE = 5;
@@ -69,9 +69,9 @@ const scoreNameToIndex: ScoreNameToIndex = {
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
+  background: {
     backgroundColor: "#EB9B3F",
+    flex: 1,
   },
   scrollView: {
     flex: 1,
@@ -228,6 +228,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+const RenderScoreCell = ({
+  index,
+  rollsLeft,
+  rollingDice,
+  gameOver,
+  lockedScores,
+  scoreValues,
+  handleLockScore,
+}: any) => {
+  const isLocked = lockedScores[index];
+  const potentialValue = scoreValues[index];
+  const displayValue = isLocked
+    ? potentialValue
+    : rollsLeft < 3
+    ? potentialValue
+    : "-";
+  const canInteract = !isLocked && !rollingDice && rollsLeft < 3;
+
+  return (
+    <TouchableOpacity
+      onPress={() => handleLockScore(index)}
+      style={[
+        styles.scoreButton,
+        isLocked ? styles.scoreButtonLocked : styles.scoreButtonAvailable,
+        !isLocked && (potentialValue > 0 || rollsLeft < 3) && !gameOver
+          ? styles.scoreButtonPotential
+          : {},
+      ]}
+      disabled={!canInteract || gameOver}
+    >
+      <Text
+        style={[
+          styles.scoreText,
+          isLocked ? styles.scoreTextLocked : styles.scoreTextAvailable,
+        ]}
+      >
+        {displayValue}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
 export default function HomeScreen() {
   const [diceValues, setDiceValues] = useState<number[]>(
@@ -453,11 +495,18 @@ export default function HomeScreen() {
     setTimeout(() => {
       rollDice();
     }, 0);
-  }, [rollDice]);
-
-  useEffect(() => {
-    restartGame();
-  }, [restartGame]);
+  }, [
+    rollDice,
+    setDiceValues,
+    setDiceHeld,
+    setScoreValues,
+    setLockedScores,
+    setUpperScoreTotal,
+    setLowerScoreTotal,
+    setBonusScore,
+    setGameOver,
+    setRollsLeft,
+  ]);
 
   const handleHoldDice = useCallback(
     (index: number) => {
@@ -599,235 +648,282 @@ export default function HomeScreen() {
     ]);
   }, [restartGame]);
 
-  const renderScoreCell = useCallback(
-    (index: number) => {
-      const isLocked = lockedScores[index];
-      const potentialValue = scoreValues[index];
-      const displayValue = isLocked
-        ? potentialValue
-        : rollsLeft < 3
-        ? potentialValue
-        : "-";
-      const canInteract = !isLocked && !rollingDice && rollsLeft < 3;
-
-      return (
-        <TouchableOpacity
-          onPress={() => handleLockScore(index)}
-          style={[
-            styles.scoreButton,
-            isLocked ? styles.scoreButtonLocked : styles.scoreButtonAvailable,
-            !isLocked && (potentialValue > 0 || rollsLeft < 3) && !gameOver
-              ? styles.scoreButtonPotential
-              : {},
-          ]}
-          disabled={!canInteract || gameOver}
-        >
-          <Text
-            style={[
-              styles.scoreText,
-              isLocked ? styles.scoreTextLocked : styles.scoreTextAvailable,
-            ]}
-          >
-            {displayValue}
-          </Text>
-        </TouchableOpacity>
-      );
-    },
-    [
-      lockedScores,
-      scoreValues,
-      rollsLeft,
-      rollingDice,
-      gameOver,
-      handleLockScore,
-    ]
-  );
-
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar
-        style="light"
-        backgroundColor={styles.safeArea.backgroundColor}
-        translucent={false}
-      />
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollViewContent}
-      >
-        <View style={styles.titleBanner}>
-          <TouchableOpacity
-            onPress={handleNewGame}
-            style={styles.newGameButton}
-            disabled={rollingDice}
-          >
-            <Text style={styles.newGameButtonText}>New Game</Text>
-          </TouchableOpacity>
-          <View style={styles.titleGroup}>
-            <Text style={styles.titleText}>Yahtzee</Text>
-            <Text style={styles.authorText}>by Ethan</Text>
-          </View>
-          <View
-            style={{ width: styles.newGameButton.paddingHorizontal * 2 + 70 }}
-          />
-        </View>
-
-        <View style={styles.scoreGridContainer}>
-          <View style={styles.scoreGridRow}>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Ones</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Ones"])}
-            </View>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Three of a kind</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Three of a kind"])}
-            </View>
-          </View>
-          <View style={styles.scoreGridRow}>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Twos</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Twos"])}
-            </View>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Four of a kind</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Four of a kind"])}
-            </View>
-          </View>
-          <View style={styles.scoreGridRow}>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Threes</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Threes"])}
-            </View>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Full House</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Full House"])}
-            </View>
-          </View>
-          <View style={styles.scoreGridRow}>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Fours</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Fours"])}
-            </View>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Small Straight</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Small Straight"])}
-            </View>
-          </View>
-          <View style={styles.scoreGridRow}>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Fives</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Fives"])}
-            </View>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Large Straight</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Large Straight"])}
-            </View>
-          </View>
-          <View style={styles.scoreGridRow}>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Sixes</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Sixes"])}
-            </View>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Chance</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Chance"])}
-            </View>
-          </View>
-          <View style={styles.scoreGridRow}>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Bonus</Text>
-            </View>
-            <View style={styles.scoreTotalValueCell}>
-              <Text style={styles.scoreTotalValueText}>{bonusScore}</Text>
-            </View>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Yahtzee</Text>
-            </View>
-            <View style={styles.scoreValueCell}>
-              {renderScoreCell(scoreNameToIndex["Yahtzee"])}
-            </View>
-          </View>
-          <View style={styles.scoreGridRow}>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Upper Total</Text>
-            </View>
-            <View style={styles.scoreTotalValueCell}>
-              <Text style={styles.scoreTotalValueText}>{upperScoreTotal}</Text>
-            </View>
-            <View style={styles.scoreLabelCell}>
-              <Text style={styles.scoreLabelText}>Lower Total</Text>
-            </View>
-            <View style={styles.scoreTotalValueCell}>
-              <Text style={styles.scoreTotalValueText}>{lowerScoreTotal}</Text>
-            </View>
-          </View>
-          <View style={styles.grandTotalRow}>
-            <Text style={styles.grandTotalLabel}>Grand Total:</Text>
-            <Text style={styles.grandTotalValue}>
-              {upperScoreTotal + lowerScoreTotal + bonusScore}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.diceContainer}>
-          {diceValues.map((value, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => handleHoldDice(index)}
-              style={[
-                styles.diceButton,
-                diceHeld[index] ? styles.diceHeld : {},
-                { backgroundColor: "transparent" },
-              ]}
-              disabled={rollingDice || rollsLeft === 3 || gameOver}
-            >
-              <Image
-                source={diceImages[numbersToText[value]]}
-                style={styles.diceImage}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
-
+    <View style={styles.background}>
+      <View style={styles.titleBanner}>
         <TouchableOpacity
-          onPress={rollDice}
-          disabled={rollsLeft <= 0 || rollingDice || gameOver}
-          style={[
-            styles.rollButton,
-            rollsLeft <= 0 || rollingDice || gameOver
-              ? styles.rollButtonDisabled
-              : {},
-          ]}
+          onPress={handleNewGame}
+          style={styles.newGameButton}
+          disabled={rollingDice}
         >
-          <Text style={styles.rollButtonText}>
-            {rollingDice ? "Rolling..." : `Roll (${rollsLeft})`}
-          </Text>
+          <Text style={styles.newGameButtonText}>New Game</Text>
         </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+        <View style={styles.titleGroup}>
+          <Text style={styles.titleText}>Yahtzee</Text>
+          <Text style={styles.authorText}>by Ethan</Text>
+        </View>
+        <View
+          style={{ width: styles.newGameButton.paddingHorizontal * 2 + 70 }}
+        />
+      </View>
+      <View style={styles.scoreGridContainer}>
+        <View style={styles.scoreGridRow}>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Ones</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Ones"]}
+            />
+          </View>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Three of a kind</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Three of a kind"]}
+            />
+          </View>
+        </View>
+        <View style={styles.scoreGridRow}>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Twos</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Twos"]}
+            />
+          </View>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Four of a kind</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Four of a kind"]}
+            />
+          </View>
+        </View>
+        <View style={styles.scoreGridRow}>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Threes</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Threes"]}
+            />
+          </View>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Full House</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Full House"]}
+            />
+          </View>
+        </View>
+        <View style={styles.scoreGridRow}>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Fours</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Fours"]}
+            />
+          </View>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Small Straight</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Small Straight"]}
+            />
+          </View>
+        </View>
+        <View style={styles.scoreGridRow}>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Fives</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Fives"]}
+            />
+          </View>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Large Straight</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Large Straight"]}
+            />
+          </View>
+        </View>
+        <View style={styles.scoreGridRow}>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Sixes</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Sixes"]}
+            />
+          </View>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Chance</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Chance"]}
+            />
+          </View>
+        </View>
+        <View style={styles.scoreGridRow}>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Bonus</Text>
+          </View>
+          <View style={styles.scoreTotalValueCell}>
+            <Text style={styles.scoreTotalValueText}>{bonusScore}</Text>
+          </View>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Yahtzee</Text>
+          </View>
+          <View style={styles.scoreValueCell}>
+            <RenderScoreCell
+              rollsLeft
+              rollingDice={rollingDice}
+              gameOver={gameOver}
+              lockedScores={lockedScores}
+              scoreValues={scoreValues}
+              handleLockScore={handleLockScore}
+              index={scoreNameToIndex["Yahtzee"]}
+            />
+          </View>
+        </View>
+        <View style={styles.scoreGridRow}>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Upper Total</Text>
+          </View>
+          <View style={styles.scoreTotalValueCell}>
+            <Text style={styles.scoreTotalValueText}>{upperScoreTotal}</Text>
+          </View>
+          <View style={styles.scoreLabelCell}>
+            <Text style={styles.scoreLabelText}>Lower Total</Text>
+          </View>
+          <View style={styles.scoreTotalValueCell}>
+            <Text style={styles.scoreTotalValueText}>{lowerScoreTotal}</Text>
+          </View>
+        </View>
+        <View style={styles.grandTotalRow}>
+          <Text style={styles.grandTotalLabel}>Grand Total:</Text>
+          <Text style={styles.grandTotalValue}>
+            {upperScoreTotal + lowerScoreTotal + bonusScore}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.diceContainer}>
+        {diceValues.map((value, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() => handleHoldDice(index)}
+            style={[
+              styles.diceButton,
+              diceHeld[index] ? styles.diceHeld : {},
+              { backgroundColor: "transparent" },
+            ]}
+            disabled={rollingDice || rollsLeft === 3 || gameOver}
+          >
+            <Image
+              source={diceImages[numbersToText[value]]}
+              style={styles.diceImage}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+      <TouchableOpacity
+        onPress={rollDice}
+        disabled={rollsLeft <= 0 || rollingDice || gameOver}
+        style={[
+          styles.rollButton,
+          rollsLeft <= 0 || rollingDice || gameOver
+            ? styles.rollButtonDisabled
+            : {},
+        ]}
+      >
+        <Text style={styles.rollButtonText}>
+          {rollingDice ? "Rolling..." : `${rollsLeft} Rolls left`}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
