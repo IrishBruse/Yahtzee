@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   },
   diceButton: {},
   diceHeld: {
-    opacity: 0.6, // Visual cue for held dice
+    opacity: 0.6,
   },
   diceImage: {
     width: 50,
@@ -234,19 +234,16 @@ const RenderScoreCell = ({
   gameOver: boolean;
   lockedScores: boolean[];
   scoreValues: number[];
-  handleLockScore: (index: number) => Promise<void>; // Updated signature
+  handleLockScore: (index: number) => Promise<void>;
 }) => {
   const isLocked = lockedScores[index];
   const potentialValue = scoreValues[index];
   const displayValue = isLocked
     ? potentialValue
-    : // Display '-' before the first roll (rollsLeft is 3)
-    // or if there's no potential score and it's not locked after rolling
-    rollsLeft === 3 && !isLocked
+    : rollsLeft === 3 && !isLocked
     ? "-"
     : potentialValue;
 
-  // Can interact if not locked, not rolling, after the first roll (rollsLeft < 3), and game not over
   const canInteract = !isLocked && !rollingDice && rollsLeft < 3 && !gameOver;
 
   return (
@@ -255,7 +252,6 @@ const RenderScoreCell = ({
       style={[
         styles.scoreButton,
         isLocked ? styles.scoreButtonLocked : styles.scoreButtonAvailable,
-        // Apply potential style if not locked, not rolling, after first roll, and value is non-zero (or index is Yahtzee bonus eligible)
         canInteract && (potentialValue > 0 || index === YAHTZEE_INDEX)
           ? styles.scoreButtonPotential
           : {},
@@ -276,14 +272,14 @@ const RenderScoreCell = ({
 
 export default function HomeScreen() {
   const [diceValues, setDiceValues] = useState<number[]>(
-    Array(NUMBER_OF_DICE).fill(0) // 0-5 represents 1-6
+    Array(NUMBER_OF_DICE).fill(0)
   );
   const [diceHeld, setDiceHeld] = useState<boolean[]>(
     Array(NUMBER_OF_DICE).fill(false)
   );
   const [scoreValues, setScoreValues] = useState<number[]>(
     Array(NUMBER_OF_SCORES).fill(0)
-  ); // Potential/Final scores
+  );
   const [lockedScores, setLockedScores] = useState<boolean[]>(
     Array(NUMBER_OF_SCORES).fill(false)
   );
@@ -299,13 +295,12 @@ export default function HomeScreen() {
     []
   );
 
-  // Effect to roll dice on initial load (similar to OnAppearing)
   useEffect(() => {
-    // Use a timeout to ensure the UI is ready before the first roll animation
     setTimeout(() => {
       rollDice();
-    }, 100); // Short delay
-  }, []); // Empty dependency array means this runs once on mount
+    }, 100);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const calculateScores = useCallback(
     (
@@ -313,34 +308,28 @@ export default function HomeScreen() {
       currentLockedScores: boolean[],
       currentScoreValues: number[]
     ): number[] => {
-      // Only calculate scores for unlocked categories
       const newScores = [...currentScoreValues];
 
       const diceFaceCount = Array(NUMBER_OF_DICE_FACES).fill(0);
       let totalDiceValue = 0;
 
-      // Note: diceValues are 0-5, representing 1-6
       currentDiceValues.forEach((value) => {
-        // value is 0-5, dice face is value + 1
         diceFaceCount[value]++;
-        totalDiceValue += value + 1; // Sum of actual face values
+        totalDiceValue += value + 1;
       });
 
-      // Reset potential scores (for unlocked categories)
       for (let i = 0; i < NUMBER_OF_SCORES; i++) {
         if (!currentLockedScores[i]) {
           newScores[i] = 0;
         }
       }
 
-      // Upper Section (Aces to Sixes)
       for (let i = 0; i < NUMBER_OF_LOWER_SCORES; i++) {
         if (!currentLockedScores[i]) {
-          newScores[i] = diceFaceCount[i] * (i + 1); // Sum of dice with face value i+1
+          newScores[i] = diceFaceCount[i] * (i + 1);
         }
       }
 
-      // Lower Section
       let has3 = false;
       let has4 = false;
       let hasYahtzee = false;
@@ -351,39 +340,17 @@ export default function HomeScreen() {
         if (diceFaceCount[i] >= 5) hasYahtzee = true;
       }
 
-      // Three of a Kind
       if (has3 && !currentLockedScores[THREE_OF_A_KIND_INDEX]) {
         newScores[THREE_OF_A_KIND_INDEX] = totalDiceValue;
       }
 
-      // Four of a Kind
       if (has4 && !currentLockedScores[FOUR_OF_A_KIND_INDEX]) {
         newScores[FOUR_OF_A_KIND_INDEX] = totalDiceValue;
       }
 
-      // Full House (Check for exactly 3 of one and exactly 2 of another)
       const counts = Object.values(diceFaceCount);
-      const isFullHouse = counts.includes(3) && counts.includes(2);
-
-      if (isFullHouse && !currentLockedScores[FULL_HOUSE_INDEX]) {
-        newScores[FULL_HOUSE_INDEX] = FULL_HOUSE_SCORE;
-      }
-      // Note: C# code has extra logic for Yahtzee counting as Full House if locked,
-      // Standard Yahtzee rules allow a Yahtzee to score as a Full House.
-      // Let's stick to the simpler and standard check: counts.includes(3) && counts.includes(2)
-      // A Yahtzee (5 of a kind) has counts like [0,0,0,0,0,5] or [5,0,0,0,0,0].
-      // Object.values([5,0,0,0,0,0]) -> [5,0,0,0,0,0]. includes(3) is false, includes(2) is false.
-      // So the check counts.includes(3) && counts.includes(2) correctly evaluates to false for Yahtzee.
-      // This means a Yahtzee CANNOT automatically score as a Full House with this rule.
-      // Yahtzee rules vary. Let's assume the C# logic is the desired behavior:
-      // A Yahtzee counts as a Full House IF you have a 3 of one number and 2 of another.
-      // This interpretation is a bit non-standard. Let's revert to the C# check.
-      // C# Logic: if (counts.includes(3) && counts.includes(2)) { isFullHouse = true; }
-      // else if (hasYahtzee && counts.includes(5)) { isFullHouse = counts.includes(3) && counts.includes(2); }
-      // The 'else if' part seems redundant if counts.includes(5) is true, then includes(3) && includes(2) will be false.
-      // A more common rule is: if 5 of a kind, it can score as Full House. Let's use that.
-      const isFiveOfAKind = counts.includes(5);
       const isStandardFullHouse = counts.includes(3) && counts.includes(2);
+      const isFiveOfAKind = counts.includes(5);
 
       if (
         (isStandardFullHouse || isFiveOfAKind) &&
@@ -392,15 +359,11 @@ export default function HomeScreen() {
         newScores[FULL_HOUSE_INDEX] = FULL_HOUSE_SCORE;
       }
 
-      // Small Straight (Sequence of 4 dice values)
-      // Check for 1-2-3-4, 2-3-4-5, or 3-4-5-6
-      // Need to check if diceFaceCount has at least 1 of each in the sequence.
       const sortedUniqueDice = Array.from(new Set(currentDiceValues)).sort(
         (a, b) => a - b
-      ); // unique values 0-5
+      );
 
       let smallStraightFound = false;
-      // Check for sequence 1-2-3-4 (indices 0,1,2,3)
       if (
         sortedUniqueDice.includes(0) &&
         sortedUniqueDice.includes(1) &&
@@ -408,7 +371,6 @@ export default function HomeScreen() {
         sortedUniqueDice.includes(3)
       )
         smallStraightFound = true;
-      // Check for sequence 2-3-4-5 (indices 1,2,3,4)
       if (
         sortedUniqueDice.includes(1) &&
         sortedUniqueDice.includes(2) &&
@@ -416,7 +378,6 @@ export default function HomeScreen() {
         sortedUniqueDice.includes(4)
       )
         smallStraightFound = true;
-      // Check for sequence 3-4-5-6 (indices 2,3,4,5)
       if (
         sortedUniqueDice.includes(2) &&
         sortedUniqueDice.includes(3) &&
@@ -429,10 +390,7 @@ export default function HomeScreen() {
         newScores[SMALL_STRAIGHT_INDEX] = SMALL_STRAIGHT_SCORE;
       }
 
-      // Large Straight (Sequence of 5 dice values)
-      // Check for 1-2-3-4-5 or 2-3-4-5-6
       let largeStraightFound = false;
-      // Check for sequence 1-2-3-4-5 (indices 0,1,2,3,4)
       if (
         sortedUniqueDice.includes(0) &&
         sortedUniqueDice.includes(1) &&
@@ -441,7 +399,6 @@ export default function HomeScreen() {
         sortedUniqueDice.includes(4)
       )
         largeStraightFound = true;
-      // Check for sequence 2-3-4-5-6 (indices 1,2,3,4,5)
       if (
         sortedUniqueDice.includes(1) &&
         sortedUniqueDice.includes(2) &&
@@ -455,16 +412,13 @@ export default function HomeScreen() {
         newScores[LARGE_STRAIGHT_INDEX] = LARGE_STRAIGHT_SCORE;
       }
 
-      // Chance
       if (!currentLockedScores[CHANCE_INDEX]) {
         newScores[CHANCE_INDEX] = totalDiceValue;
       }
 
-      // Yahtzee (Exactly 5 of a kind)
       if (hasYahtzee && !currentLockedScores[YAHTZEE_INDEX]) {
         newScores[YAHTZEE_INDEX] = YAHTZEE_SCORE;
       }
-      // Yahtzee Bonus logic is handled in handleLockScore
 
       return newScores;
     },
@@ -477,27 +431,24 @@ export default function HomeScreen() {
       currentLockedScores: boolean[],
       currentScoreValues: number[]
     ) => {
-      const newPotentialScores = calculateScores(
-        currentDiceValues,
-        currentLockedScores,
-        currentScoreValues
+      setScoreValues(
+        calculateScores(
+          currentDiceValues,
+          currentLockedScores,
+          currentScoreValues
+        )
       );
-      // setScoreValues(newPotentialScores);
     },
     [calculateScores]
   );
 
-  // This effect runs whenever diceValues or lockedScores change
-  // It keeps the potential scores updated based on the current dice and locked categories
   useEffect(() => {
-    // Only update scores if not rolling, to prevent flickering during animation
     if (!rollingDice) {
       updateScores(diceValues, lockedScores, scoreValues);
     }
   }, [diceValues, lockedScores, rollingDice, scoreValues, updateScores]);
 
   const rollDice = useCallback(async () => {
-    // Disable roll button and score buttons immediately
     if (rollsLeft <= 0 || rollingDice || gameOver) return;
 
     setRollingDice(true);
@@ -508,7 +459,6 @@ export default function HomeScreen() {
     const ANIMATION_FRAME_DELAY = 25;
     const ANIMATION_SET_DELAY = 50;
 
-    // Animation loop
     for (let i = 0; i < ROLL_ANIMATION_COUNT; i++) {
       const animationValues = [...diceValues];
       for (let j = 0; j < NUMBER_OF_DICE; j++) {
@@ -517,13 +467,10 @@ export default function HomeScreen() {
         }
       }
       setDiceValues(animationValues);
-      // Added await delay here for each frame update
       await delay(ANIMATION_FRAME_DELAY);
     }
-    // Small delay between animation sets
     await delay(ANIMATION_SET_DELAY);
 
-    // Final roll values
     const finalValues = [...diceValues];
     for (let j = 0; j < NUMBER_OF_DICE; j++) {
       if (!diceHeld[j]) {
@@ -532,12 +479,9 @@ export default function HomeScreen() {
     }
     setDiceValues(finalValues);
 
-    // Update potential scores based on the final values
     updateScores(finalValues, lockedScores, scoreValues);
 
     setRollingDice(false);
-
-    // Re-enable score buttons (handled by RenderScoreCell's disabled prop)
   }, [
     rollsLeft,
     rollingDice,
@@ -547,21 +491,18 @@ export default function HomeScreen() {
     scoreValues,
     updateScores,
     delay,
-    gameOver, // Added gameOver to dependency array
+    gameOver,
   ]);
 
   const nextTurn = useCallback(() => {
     setDiceHeld(Array(NUMBER_OF_DICE).fill(false));
     setRollsLeft(3);
-    // Update potential scores with diceValues = [0,0,0,0,0] for the new turn start
     updateScores(Array(NUMBER_OF_DICE).fill(0), lockedScores, scoreValues);
-    setDiceValues(Array(NUMBER_OF_DICE).fill(0)); // Reset dice visuals too
-    // Automatically roll at the start of the next turn, similar to Xamarin code
-    // Adding a small delay to allow state updates to propagate
+    setDiceValues(Array(NUMBER_OF_DICE).fill(0));
     setTimeout(() => {
       rollDice();
     }, 100);
-  }, [rollDice, lockedScores, scoreValues, updateScores]); // Added dependencies
+  }, [rollDice, lockedScores, scoreValues, updateScores]);
 
   const restartGame = useCallback(() => {
     setDiceValues(Array(NUMBER_OF_DICE).fill(0));
@@ -573,13 +514,11 @@ export default function HomeScreen() {
     setBonusScore(0);
     setGameOver(false);
     setRollsLeft(3);
-    // Start the first turn with a roll after resetting
     setTimeout(() => {
       rollDice();
     }, 100);
   }, [rollDice]);
 
-  // This effect runs whenever lockedScores changes to check for game over
   useEffect(() => {
     const allScoresLocked = lockedScores.every((locked) => locked);
     if (allScoresLocked && !gameOver) {
@@ -602,28 +541,24 @@ export default function HomeScreen() {
 
   const handleHoldDice = useCallback(
     (index: number) => {
-      // Can hold dice only after the first roll (rollsLeft < 3) and not while rolling
       if (rollingDice || rollsLeft === 3 || gameOver) return;
       const newHeld = [...diceHeld];
       newHeld[index] = !newHeld[index];
       setDiceHeld(newHeld);
     },
-    [diceHeld, rollingDice, rollsLeft, gameOver] // Added gameOver
+    [diceHeld, rollingDice, rollsLeft, gameOver]
   );
 
   const handleLockScore = useCallback(
     async (index: number) => {
-      // Can lock score only if not rolling, score is not already locked, after first roll, and game not over
       if (rollingDice || lockedScores[index] || rollsLeft === 3 || gameOver) {
         return;
       }
 
       const scoreToLock = scoreValues[index];
 
-      // Implement the "Are you sure you want to take a lower score?" logic from C#
       let highestScore = -1;
       for (let i = 0; i < NUMBER_OF_SCORES; i++) {
-        // Find the highest available (unlocked) score, excluding Chance for comparison
         if (!lockedScores[i] && i !== CHANCE_INDEX) {
           if (scoreValues[i] > highestScore) {
             highestScore = scoreValues[i];
@@ -631,7 +566,6 @@ export default function HomeScreen() {
         }
       }
 
-      // If the selected score is lower than the highest available (and not the highest itself, preventing infinite loop)
       if (
         scoreToLock < highestScore &&
         scoreToLock !== scoreValues[highestScore]
@@ -639,7 +573,7 @@ export default function HomeScreen() {
         const confirmLowerScore = await new Promise((resolve) => {
           Alert.alert(
             `Are you sure you want ${scoreToLock}?`,
-            `There is a higher score available at ${highestScore}.`,
+            `There is a higher score available.`,
             [
               { text: "Yes", onPress: () => resolve(true) },
               { text: "No", style: "cancel", onPress: () => resolve(false) },
@@ -648,7 +582,7 @@ export default function HomeScreen() {
         });
 
         if (!confirmLowerScore) {
-          return; // User chose not to lock the lower score
+          return;
         }
       }
 
@@ -656,107 +590,40 @@ export default function HomeScreen() {
       newLockedScores[index] = true;
       setLockedScores(newLockedScores);
 
-      // The score being locked is the currently displayed score potential
       const newFinalScores = [...scoreValues];
-      // newFinalScores[index] is already set to the potential value by updateScores
-      // Let's calculate totals based on the newly locked score values
 
-      let currentUpperTotal = 0;
-      let currentLowerTotal = 0;
-      let currentBonus = 0;
-      let yahtzeeBonusEarned = 0; // Track Yahtzee bonuses for this lock action
-
-      // Check for Yahtzee bonus BEFORE calculating base score totals
-      // This uses the *current* dice values to see if a Yahtzee was rolled
       const diceFaceCount = Array(NUMBER_OF_DICE_FACES).fill(0);
       diceValues.forEach((value) => {
         diceFaceCount[value]++;
       });
       const isCurrentRollYahtzee = diceFaceCount.some((count) => count >= 5);
 
-      // Yahtzee Bonus Logic: If Yahtzee is locked for 50 and the current roll is a Yahtzee,
-      // award a bonus UNLESS this lock action is for the Yahtzee box itself and its score was 0.
       if (isCurrentRollYahtzee) {
-        // Check if the Yahtzee box was already locked and had 50 points or more
         if (
           lockedScores[YAHTZEE_INDEX] &&
           scoreValues[YAHTZEE_INDEX] >= YAHTZEE_SCORE
         ) {
-          yahtzeeBonusEarned = YAHTZEE_BONUS_SCORE;
-          console.log("Yahtzee Bonus Earned!");
-
-          // If this is a bonus Yahtzee, update the Yahtzee score visually
-          // Although the bonus doesn't add to the Yahtzee box value itself,
-          // the C# code appears to add it to scoreValues[YahtzeeIndex].
-          // Let's replicate that visual update for consistency, though the bonus
-          // is truly added to the lowerTotal.
           if (index !== YAHTZEE_INDEX) {
-            // Only update the visual if locking *another* score
-            newFinalScores[YAHTZEE_INDEX] += YAHTZEE_BONUS_SCORE; // Add bonus visually to Yahtzee score
+            newFinalScores[YAHTZEE_INDEX] += YAHTZEE_BONUS_SCORE;
           } else if (newFinalScores[YAHTZEE_INDEX] === YAHTZEE_SCORE) {
-            // If locking the Yahtzee box itself for exactly 50, apply the bonus
             newFinalScores[YAHTZEE_INDEX] += YAHTZEE_BONUS_SCORE;
           }
         }
-        // If the current roll is a Yahtzee and the Yahtzee box is NOT locked,
-        // the scoreValues[YAHTZEE_INDEX] should already be 50 (calculated by updateScores)
-        // and is correctly locked below.
       }
 
-      // Calculate totals based on the NEW locked scores and FINALIZED values
-      for (let i = 0; i < NUMBER_OF_SCORES; i++) {
+      let currentUpperTotal = 0;
+      let currentBonus = 0;
+
+      for (let i = 0; i < NUMBER_OF_LOWER_SCORES; i++) {
         if (newLockedScores[i]) {
-          // Use newLockedScores
-          if (i < NUMBER_OF_LOWER_SCORES) {
-            currentUpperTotal += newFinalScores[i]; // Use newFinalScores
-          } else {
-            // Lower total calculation needs to be careful with the Yahtzee bonus.
-            // The bonus should be added to the *total*, not the individual box value (except for the visual update above).
-            // Let's recalculate lower total based on the *final* locked values, and add the bonus separately.
-          }
+          currentUpperTotal += newFinalScores[i];
         }
       }
 
-      // Recalculate lower total correctly based on locked scores
-      let tempLowerTotal = 0;
-      for (let i = NUMBER_OF_LOWER_SCORES; i < NUMBER_OF_SCORES; i++) {
-        if (newLockedScores[i]) {
-          // If the Yahtzee box is locked, the value in newFinalScores includes the base 50
-          // and potentially Yahtzee bonuses added during THIS lock action for other scores.
-          // We need to be careful not to double-count the bonus.
-          // A simpler approach is to sum the base locked values, then add the bonus.
-          if (i === YAHTZEE_INDEX) {
-            // If Yahtzee is locked, add its base value (50)
-            if (newFinalScores[YAHTZEE_INDEX] > 0) {
-              // Check if Yahtzee was scored (not 0)
-              tempLowerTotal += YAHTZEE_SCORE;
-              // Any score beyond 50 in newFinalScores[YAHTZEE_INDEX] is a bonus that was added for visual purposes.
-              // The actual bonus points are added to lowerTotal.
-            }
-          } else {
-            tempLowerTotal += newFinalScores[i];
-          }
-        }
-      }
-      // Add the bonus earned in this specific turn's lock action
-      tempLowerTotal += yahtzeeBonusEarned;
-
-      // Recalculate the total number of bonus points based on all locked Yahtzees
-      let totalYahtzeeBonuses = 0;
-      if (
-        newLockedScores[YAHTZEE_INDEX] &&
-        newFinalScores[YAHTZEE_INDEX] > YAHTZEE_SCORE
-      ) {
-        // If Yahtzee box is locked and its value is > 50, calculate total bonuses stored there
-        totalYahtzeeBonuses = newFinalScores[YAHTZEE_INDEX] - YAHTZEE_SCORE;
-      }
-
-      // Adjust lower total to include all earned Yahtzee bonuses correctly
       let recalculatedLowerTotal = 0;
       for (let i = NUMBER_OF_LOWER_SCORES; i < NUMBER_OF_SCORES; i++) {
         if (newLockedScores[i]) {
           if (i === YAHTZEE_INDEX) {
-            // Add the base Yahtzee score if locked and scored
             if (newFinalScores[i] >= YAHTZEE_SCORE) {
               recalculatedLowerTotal += YAHTZEE_SCORE;
             }
@@ -765,7 +632,13 @@ export default function HomeScreen() {
           }
         }
       }
-      // Add the total Yahtzee bonuses earned across all turns
+      let totalYahtzeeBonuses = 0;
+      if (
+        newLockedScores[YAHTZEE_INDEX] &&
+        newFinalScores[YAHTZEE_INDEX] > YAHTZEE_SCORE
+      ) {
+        totalYahtzeeBonuses = newFinalScores[YAHTZEE_INDEX] - YAHTZEE_SCORE;
+      }
       recalculatedLowerTotal += totalYahtzeeBonuses;
 
       if (currentUpperTotal >= BONUS_THRESHOLD) {
@@ -773,24 +646,22 @@ export default function HomeScreen() {
       }
 
       setUpperScoreTotal(currentUpperTotal);
-      setLowerScoreTotal(recalculatedLowerTotal); // Use the correctly recalculated lower total
+      setLowerScoreTotal(recalculatedLowerTotal);
       setBonusScore(currentBonus);
-      setScoreValues(newFinalScores); // Update final score values display
+      setScoreValues(newFinalScores);
 
-      // Check for game over after updating scores and totals
       const gamesOverCheck = newLockedScores.every((locked) => locked);
       setGameOver(gamesOverCheck);
 
       if (gamesOverCheck) {
         const finalTotalScore =
-          currentUpperTotal + recalculatedLowerTotal + currentBonus; // Use recalculatedLowerTotal
+          currentUpperTotal + recalculatedLowerTotal + currentBonus;
         Alert.alert(
           "Game Over!",
           `Upper Score: ${currentUpperTotal}\nBonus: ${currentBonus}\nLower Score: ${recalculatedLowerTotal}\n\nTotal Score: ${finalTotalScore}`,
           [{ text: "New Game", onPress: restartGame }]
         );
       } else {
-        // Only move to the next turn if the game is not over
         nextTurn();
       }
     },
@@ -833,7 +704,6 @@ export default function HomeScreen() {
           <Text style={styles.titleText}>Yahtzee</Text>
           <Text style={styles.authorText}>by Ethan</Text>
         </View>
-        {/* Placeholder to balance the layout */}
         <View
           style={{ width: styles.newGameButton.paddingHorizontal * 2 + 70 }}
         />
@@ -843,14 +713,13 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollViewContent}
       >
         <View style={styles.scoreGridContainer}>
-          {/* Score Grid Rows */}
           <View style={styles.scoreGridRow}>
             <View style={styles.scoreLabelCell}>
               <Text style={styles.scoreLabelText}>Ones</Text>
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -864,7 +733,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -880,7 +749,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -894,7 +763,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -910,7 +779,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -924,7 +793,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -940,7 +809,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -954,7 +823,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -970,7 +839,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -984,7 +853,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -1000,7 +869,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -1014,7 +883,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -1036,7 +905,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.scoreValueCell}>
               <RenderScoreCell
-                rollsLeft={rollsLeft} // Pass rollsLeft
+                rollsLeft={rollsLeft}
                 rollingDice={rollingDice}
                 gameOver={gameOver}
                 lockedScores={lockedScores}
@@ -1075,13 +944,11 @@ export default function HomeScreen() {
               style={[
                 styles.diceButton,
                 diceHeld[index] ? styles.diceHeld : {},
-                { backgroundColor: "transparent" }, // Explicitly set background to transparent
+                { backgroundColor: "transparent" },
               ]}
-              // Can hold dice only after the first roll and not while rolling or game over
               disabled={rollsLeft === 3 || rollingDice || gameOver}
             >
               <Image
-                // diceValues are 0-5, numbersToText indices are 0-5
                 source={diceImages[numbersToText[value]]}
                 style={styles.diceImage}
                 resizeMode="contain"
