@@ -1,5 +1,6 @@
-import { View, StyleSheet, StatusBar } from "react-native";
+import { StyleSheet, StatusBar } from "react-native";
 import { Slot } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const styles = StyleSheet.create({
   container: {
@@ -13,9 +14,9 @@ const styles = StyleSheet.create({
 
 export default function Layout() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor={styles.statusbar.backgroundColor} />
       <Slot />
-    </View>
+    </SafeAreaView>
   );
 }
