@@ -58,167 +58,6 @@ const YAHTZEE_BONUS_SCORE = 100;
 const BONUS_THRESHOLD = 63;
 const BONUS_VALUE = 35;
 
-const styles = StyleSheet.create({
-  background: {
-    backgroundColor: "#EB9B3F",
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollViewContent: {
-    paddingBottom: 20,
-  },
-  titleBanner: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginHorizontal: 10,
-    marginVertical: 5,
-    paddingHorizontal: 5,
-  },
-  newGameButton: {
-    backgroundColor: "#CA2222",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-  },
-  newGameButtonText: {
-    color: "#EA8D23",
-    fontWeight: "bold",
-  },
-  titleGroup: {
-    alignItems: "center",
-  },
-  titleText: {
-    fontSize: 42,
-    color: "#CA2222",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  authorText: {
-    fontSize: 12,
-    color: "#CA2222",
-    textAlign: "center",
-    marginTop: -5,
-  },
-  scoreGridContainer: {
-    marginHorizontal: 10,
-    marginVertical: 0,
-  },
-  scoreGridRow: {
-    flexDirection: "row",
-  },
-  scoreCell: {
-    justifyContent: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  scoreLabelCell: {
-    flex: 1,
-    justifyContent: "center",
-    paddingLeft: 5,
-  },
-  scoreLabelText: {
-    color: "#CA2222",
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  scoreValueCell: {
-    flex: 1.5,
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 5,
-  },
-  scoreTotalValueCell: {
-    flex: 1.5,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  scoreTotalValueText: {
-    color: "#CA2222",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  scoreButton: {
-    backgroundColor: "#CA2222",
-    borderRadius: 5,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    width: "90%",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 34,
-  },
-  scoreButtonAvailable: {},
-  scoreButtonPotential: {
-    borderColor: "#FFFF00",
-    borderWidth: 1,
-  },
-  scoreButtonLocked: {
-    backgroundColor: "transparent",
-  },
-  scoreText: {
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  scoreTextAvailable: {
-    color: "#EA8D23",
-  },
-  scoreTextLocked: {
-    color: "#CA2222",
-  },
-  diceContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    marginHorizontal: 10,
-    marginVertical: 5,
-    height: 80,
-  },
-  diceButton: {},
-  diceHeld: {
-    opacity: 0.6,
-  },
-  diceImage: {
-    width: 50,
-    height: 50,
-  },
-  rollButton: {
-    backgroundColor: "#CA2222",
-    paddingVertical: 15,
-    marginHorizontal: 10,
-    borderRadius: 5,
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 10,
-  },
-  rollButtonText: {
-    color: "#EA8D23",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  rollButtonDisabled: {
-    backgroundColor: "#888",
-  },
-  grandTotalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-    marginTop: 15,
-  },
-  grandTotalLabel: {
-    color: "#CA2222",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  grandTotalValue: {
-    color: "#CA2222",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-});
-
 const RenderScoreCell = ({
   index,
   rollsLeft,
@@ -974,3 +813,164 @@ export default function HomeScreen() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  background: {
+    backgroundColor: "#EB9B3F",
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 20,
+  },
+  titleBanner: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 5,
+    paddingHorizontal: 5,
+  },
+  newGameButton: {
+    backgroundColor: "#CA2222",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+  },
+  newGameButtonText: {
+    color: "#EA8D23",
+    fontWeight: "bold",
+  },
+  titleGroup: {
+    alignItems: "center",
+  },
+  titleText: {
+    fontSize: 42,
+    color: "#CA2222",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  authorText: {
+    fontSize: 12,
+    color: "#CA2222",
+    textAlign: "center",
+    marginTop: -5,
+  },
+  scoreGridContainer: {
+    marginHorizontal: 10,
+    marginVertical: 0,
+  },
+  scoreGridRow: {
+    flexDirection: "row",
+  },
+  scoreCell: {
+    justifyContent: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  scoreLabelCell: {
+    flex: 1,
+    justifyContent: "center",
+    paddingLeft: 5,
+  },
+  scoreLabelText: {
+    color: "#CA2222",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  scoreValueCell: {
+    flex: 1.5,
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 5,
+  },
+  scoreTotalValueCell: {
+    flex: 1.5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scoreTotalValueText: {
+    color: "#CA2222",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  scoreButton: {
+    backgroundColor: "#CA2222",
+    borderRadius: 5,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    width: "90%",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 34,
+  },
+  scoreButtonAvailable: {},
+  scoreButtonPotential: {
+    borderColor: "#FFFF00",
+    borderWidth: 1,
+  },
+  scoreButtonLocked: {
+    backgroundColor: "transparent",
+  },
+  scoreText: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  scoreTextAvailable: {
+    color: "#EA8D23",
+  },
+  scoreTextLocked: {
+    color: "#CA2222",
+  },
+  diceContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 5,
+    height: 80,
+  },
+  diceButton: {},
+  diceHeld: {
+    opacity: 0.6,
+  },
+  diceImage: {
+    width: 50,
+    height: 50,
+  },
+  rollButton: {
+    backgroundColor: "#CA2222",
+    paddingVertical: 15,
+    marginHorizontal: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 10,
+  },
+  rollButtonText: {
+    color: "#EA8D23",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  rollButtonDisabled: {
+    backgroundColor: "#888",
+  },
+  grandTotalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    marginTop: 15,
+  },
+  grandTotalLabel: {
+    color: "#CA2222",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  grandTotalValue: {
+    color: "#CA2222",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+});
