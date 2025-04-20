@@ -182,15 +182,16 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: 10,
     marginVertical: 5,
-    height: 80,
+    height: 120,
   },
   diceButton: {},
   diceHeld: {
     opacity: 0.6,
   },
   diceImage: {
-    width: 50,
-    height: 50,
+    width: 70,
+    height: 70,
+    aspectRatio: 1,
   },
   rollButton: {
     backgroundColor: Red,

@@ -5,9 +5,11 @@ import { Orange, Red } from "./constants";
 export const ScoreCell = ({
   label,
   value,
+  locked,
 }: {
   label: string;
   value: string;
+  locked: boolean;
 }) => {
   return (
     <View style={styles.row}>
@@ -16,10 +18,12 @@ export const ScoreCell = ({
         onPress={() => {
           console.log("press");
         }}
-        style={styles.scoreButton}
+        style={[styles.scoreButton, locked ? styles.scoreButtonLocked : {}]}
         disabled={false}
       >
-        <Text style={styles.scoreText}>{value}</Text>
+        <Text style={[styles.scoreText, locked ? styles.scoreTextLocked : {}]}>
+          {value}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -30,6 +34,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   label: {
     color: Red,
@@ -54,14 +59,10 @@ export const styles = StyleSheet.create({
     borderRadius: 5,
     paddingVertical: 6,
     paddingHorizontal: 10,
-    width: "75%",
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 60,
-  },
-  scoreButtonPotential: {
-    borderColor: "#FFFF00",
-    borderWidth: 1,
+    width: 80,
+    minHeight: 80,
   },
   scoreButtonLocked: {
     backgroundColor: "transparent",
