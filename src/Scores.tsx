@@ -2,6 +2,8 @@ import { StyleSheet, View } from "react-native";
 import { ScoreCell } from "./ScoreCell";
 import { ScoreNames } from "./constants";
 
+const upperSectionIndices = [0, 1, 2, 3, 4, 5];
+
 type ScoresProps = {
   scoreValues: number[];
   lockedScores: boolean[];
@@ -19,11 +21,6 @@ export const Scores = ({
   upperTotalScore,
   lowerTotalScore,
 }: ScoresProps) => {
-  for (let i = 0; i < ScoreNames.length; i++) {
-    console.log(ScoreNames[i] + ":", scoreValues[i]);
-  }
-  const upperSectionIndices = [0, 1, 2, 3, 4, 5];
-
   return (
     <View style={styles.grid}>
       {upperSectionIndices.map((index) => (
@@ -64,12 +61,11 @@ const styles = StyleSheet.create({
   grid: {
     flex: 1,
     gap: 10,
+    marginHorizontal: 10,
   },
   row: {
-    flex: 1,
     flexDirection: "row",
     justifyContent: "space-around",
-    gap: 10,
   },
   smallerCell: {
     flexGrow: 0.25,

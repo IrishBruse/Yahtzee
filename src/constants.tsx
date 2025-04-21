@@ -1,5 +1,3 @@
-import { ImageRequireSource } from "react-native";
-
 export const NUMBER_OF_DICE = 5;
 export const NUMBER_OF_DICE_FACES = 6;
 export const NUMBER_OF_SCORES = 13;
@@ -19,31 +17,30 @@ export const YAHTZEE_BONUS_SCORE = 100;
 export const BONUS_THRESHOLD = 63;
 export const BONUS_VALUE = 35;
 export const numbersToText = ["one", "two", "three", "four", "five", "six"];
-export const DiceImages: Record<string, ImageRequireSource> = {
-  one: require("../assets/dice/dice_one.png"),
-  two: require("../assets/dice/dice_two.png"),
-  three: require("../assets/dice/dice_three.png"),
-  four: require("../assets/dice/dice_four.png"),
-  five: require("../assets/dice/dice_five.png"),
-  six: require("../assets/dice/dice_six.png"),
-};
-export const ScoreNameToIndex: Record<string, number> = {
-  Ones: 0,
-  Twos: 1,
-  Threes: 2,
-  Fours: 3,
-  Fives: 4,
-  Sixes: 5,
-  "Three of a kind": 6,
-  "Four of a kind": 7,
-  "Full House": 8,
-  "Small Straight": 9,
-  "Large Straight": 10,
-  Chance: 11,
-  Yahtzee: 12,
-};
+export const DiceImages = [
+  require("../assets/dice/dice_one.png"),
+  require("../assets/dice/dice_two.png"),
+  require("../assets/dice/dice_three.png"),
+  require("../assets/dice/dice_four.png"),
+  require("../assets/dice/dice_five.png"),
+  require("../assets/dice/dice_six.png"),
+];
 
-export const ScoreNames = Object.keys(ScoreNameToIndex);
+export const ScoreNames = [
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five",
+  "Sixe",
+  "Three of a kind",
+  "Four of a kind",
+  "Full House",
+  "Small Straight",
+  "Large Straight",
+  "Chance",
+  "Yahtzee",
+];
 
 export const Red = "#CA2222";
 export const Orange = "#EB9B3F";

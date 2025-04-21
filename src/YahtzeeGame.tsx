@@ -7,6 +7,7 @@ import {
   Image,
   ScrollView,
   Pressable,
+  Alert,
 } from "react-native";
 import {
   CHANCE_INDEX,
@@ -27,7 +28,6 @@ import {
   YAHTZEE_INDEX,
   YAHTZEE_SCORE,
   DiceImages,
-  numbersToText,
 } from "../src/constants";
 import { Scores } from "./Scores";
 
@@ -65,7 +65,6 @@ export default function YahtzeeGame() {
   }, [gameOver, upperScoreTotal, lowerScoreTotal]);
 
   const restartGame = () => {
-    console.log("restartGame");
     setRollsLeft(3);
     setDiceValues(Array(NUMBER_OF_DICE).fill(0));
     setDiceHeld(Array(NUMBER_OF_DICE).fill(false));
@@ -78,11 +77,16 @@ export default function YahtzeeGame() {
   };
 
   const handleNewGame = () => {
-    console.log("handleNewGame");
-    if (window.confirm("Are you sure you want to start a new game?")) {
-      restartGame();
-    }
+    Alert.alert("Are you sure you want to start a new game?", undefined, [
+      { text: "Yes", onPress: restartGame, style: "destructive" },
+      { text: "No", style: "cancel" },
+    ]);
   };
+
+  useEffect(() => {
+    restartGame();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLockScore = async (index: number) => {
     console.log("handleLockScore", index);
@@ -164,14 +168,12 @@ export default function YahtzeeGame() {
       const newDiceValues = [...diceValues];
       for (let i = 0; i < NUMBER_OF_DICE; i++) {
         if (!diceHeld[i]) {
-          // Simulate a delay for animation effect
           await new Promise((resolve) => setTimeout(resolve, 100));
-          newDiceValues[i] = Math.floor(Math.random() * 6); // 0 to 5
+          newDiceValues[i] = Math.floor(Math.random() * 6);
         }
       }
       setDiceValues(newDiceValues);
 
-      // Simulate animation delay
       setRollingDice(false);
       updateScores(newDiceValues);
     }
@@ -192,8 +194,6 @@ export default function YahtzeeGame() {
       }
     }
 
-    console.log({ newScoreValues });
-
     const diceFaceCount = Array(6).fill(0);
     for (const value of currentDiceValues) {
       diceFaceCount[value]++;
@@ -212,8 +212,6 @@ export default function YahtzeeGame() {
     currentScoreValues: number[],
     totalDiceValue: number
   ) => {
-    console.log({ diceFaceCount });
-
     for (let i = 0; i < diceFaceCount.length; i++) {
       const diceValue = diceFaceCount[i] * (i + 1);
 
@@ -320,7 +318,7 @@ export default function YahtzeeGame() {
         </View>
         <TouchableOpacity
           onPress={() => {
-            alert(
+            Alert.alert(
               "Game Info:\nRoll 5 dice up to 3 times per turn.\nScore points by making different combinations.\nLock scores to prevent changes.\nBonus points for upper section total >= 63.\nYahtzee (5 of a kind) scores high!"
             );
           }}
@@ -330,52 +328,51 @@ export default function YahtzeeGame() {
           <Text style={styles.newGameButtonText}>Game Info</Text>
         </TouchableOpacity>
       </View>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollViewContent}
-      >
-        <View style={styles.scoreGridContainer}>
-          <Scores
-            scoreValues={scoreValues}
-            lockedScores={lockedScores}
-            handleLockScore={handleLockScore}
-            upperTotalScore={upperScoreTotal}
-            lowerTotalScore={lowerScoreTotal}
-            bonusScore={bonusScore}
-          />
+      <ScrollView>
+        <Scores
+          scoreValues={scoreValues}
+          lockedScores={lockedScores}
+          handleLockScore={handleLockScore}
+          upperTotalScore={upperScoreTotal}
+          lowerTotalScore={lowerScoreTotal}
+          bonusScore={bonusScore}
+        />
+        <View>
+          <View style={styles.diceContainer}>
+            {diceValues.map((value, index) => (
+              <Pressable
+                key={index}
+                onPress={() => holdDice(index)}
+                style={[
+                  styles.diceButton,
+                  diceHeld[index] ? styles.diceButtonHeld : {},
+                ]}
+              >
+                <Image
+                  source={DiceImages[value]}
+                  style={styles.diceImage}
+                  resizeMode="contain"
+                />
+              </Pressable>
+            ))}
+          </View>
+          <TouchableOpacity
+            onPress={rollDice}
+            disabled={rollsLeft <= 0 || rollingDice || gameOver}
+            style={[
+              styles.rollButton,
+              rollsLeft <= 0 || rollingDice || gameOver
+                ? styles.rollButtonDisabled
+                : {},
+            ]}
+          >
+            <Text style={styles.rollButtonText}>
+              {rollingDice
+                ? "Rolling..."
+                : `${rollsLeft} Roll${rollsLeft !== 1 ? "s" : ""} left`}
+            </Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.diceContainer}>
-          {diceValues.map((value, index) => (
-            <Pressable
-              key={index}
-              onPress={() => holdDice(index)}
-              style={[
-                styles.diceButton,
-                diceHeld[index] ? styles.diceButtonHeld : {},
-              ]}
-            >
-              <Image
-                source={DiceImages[numbersToText[value]]} // Adjust index for 0-based array
-                style={styles.diceImage}
-                resizeMode="contain"
-              />
-            </Pressable>
-          ))}
-        </View>
-        <TouchableOpacity
-          onPress={rollDice}
-          disabled={rollsLeft <= 0 || rollingDice || gameOver}
-          style={[
-            styles.rollButton,
-            rollsLeft <= 0 || rollingDice || gameOver
-              ? styles.rollButtonDisabled
-              : {},
-          ]}
-        >
-          <Text style={styles.rollButtonText}>
-            {rollingDice ? "Rolling..." : `${rollsLeft} Rolls left`}
-          </Text>
-        </TouchableOpacity>
       </ScrollView>
     </>
   );
@@ -385,12 +382,6 @@ export const styles = StyleSheet.create({
   background: {
     backgroundColor: Orange,
     flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollViewContent: {
-    paddingBottom: 20,
   },
   titleBanner: {
     flexDirection: "row",
@@ -425,10 +416,6 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: -5,
   },
-  scoreGridContainer: {
-    marginHorizontal: 10,
-    marginVertical: 0,
-  },
   scoreTotalValueCell: {
     flex: 1.5,
     justifyContent: "center",
@@ -461,12 +448,12 @@ export const styles = StyleSheet.create({
     marginVertical: 10,
   },
   rollButtonText: {
-    color: "#EA8D23",
+    color: Orange,
     fontSize: 18,
     fontWeight: "bold",
   },
   rollButtonDisabled: {
-    backgroundColor: "#888",
+    backgroundColor: Orange,
   },
   grandTotalRow: {
     flexDirection: "row",

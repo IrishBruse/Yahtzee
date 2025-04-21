@@ -23,7 +23,7 @@ export const ScoreCell = ({
   style?: StyleProp<ViewStyle> | undefined;
 }) => {
   return (
-    <View style={styles.cell}>
+    <View style={[styles.cell]}>
       <Text style={styles.label}>{label}</Text>
       <TouchableOpacity
         onPress={onPress}
@@ -40,7 +40,6 @@ export const ScoreCell = ({
 
 export const styles = StyleSheet.create({
   cell: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -51,6 +50,8 @@ export const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "left",
     paddingRight: 6,
+    flex: 1,
+    flexWrap: "wrap",
   },
   scoreText: {
     fontSize: 18,
