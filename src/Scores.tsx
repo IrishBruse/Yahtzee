@@ -33,7 +33,12 @@ export const Scores = ({
           clickable={lockedScores[0]}
           onPress={() => handleLockScore(0)}
         />
-        <ScoreCell label="Three of a Kind" value={12} clickable={locked} />
+        <ScoreCell
+          label={ScoreNames[6]}
+          value={scoreValues[6]}
+          clickable={lockedScores[6]}
+          onPress={() => handleLockScore(6)}
+        />
       </View>
       <View style={styles.row}>
         <ScoreCell
@@ -42,7 +47,12 @@ export const Scores = ({
           clickable={lockedScores[1]}
           onPress={() => handleLockScore(1)}
         />
-        <ScoreCell label="Four of a Kind" value={12} clickable={locked} />
+        <ScoreCell
+          label={ScoreNames[7]}
+          value={scoreValues[7]}
+          clickable={lockedScores[7]}
+          onPress={() => handleLockScore(7)}
+        />
       </View>
       <View style={styles.row}>
         <ScoreCell
@@ -51,7 +61,12 @@ export const Scores = ({
           clickable={lockedScores[2]}
           onPress={() => handleLockScore(2)}
         />
-        <ScoreCell label="Full House" value={123} clickable={locked} />
+        <ScoreCell
+          label={ScoreNames[8]}
+          value={scoreValues[8]}
+          clickable={lockedScores[8]}
+          onPress={() => handleLockScore(8)}
+        />
       </View>
       <View style={styles.row}>
         <ScoreCell
@@ -60,7 +75,12 @@ export const Scores = ({
           clickable={lockedScores[3]}
           onPress={() => handleLockScore(3)}
         />
-        <ScoreCell label="Small Staight" value={123} clickable={locked} />
+        <ScoreCell
+          label={ScoreNames[9]}
+          value={scoreValues[9]}
+          clickable={lockedScores[9]}
+          onPress={() => handleLockScore(9)}
+        />
       </View>
       <View style={styles.row}>
         <ScoreCell
@@ -69,7 +89,12 @@ export const Scores = ({
           clickable={lockedScores[4]}
           onPress={() => handleLockScore(4)}
         />
-        <ScoreCell label="Large Staight" value={12} clickable={locked} />
+        <ScoreCell
+          label={ScoreNames[10]}
+          value={scoreValues[10]}
+          clickable={lockedScores[10]}
+          onPress={() => handleLockScore(10)}
+        />
       </View>
       <View style={styles.row}>
         <ScoreCell
@@ -78,15 +103,25 @@ export const Scores = ({
           clickable={lockedScores[5]}
           onPress={() => handleLockScore(5)}
         />
-        <ScoreCell label="Chance" value={12} clickable={locked} />
+        <ScoreCell
+          label={ScoreNames[11]}
+          value={scoreValues[11]}
+          clickable={lockedScores[11]}
+          onPress={() => handleLockScore(11)}
+        />
       </View>
       <View style={styles.row}>
         <ScoreCell label="Bonus" value={bonusScore} clickable />
-        <ScoreCell label="Yahtzee" value={0} clickable />
+        <ScoreCell
+          label={ScoreNames[12]}
+          value={scoreValues[12]}
+          clickable={lockedScores[12]}
+          onPress={() => handleLockScore(12)}
+        />
       </View>
       <View style={styles.row}>
-        <ScoreCell label="Upper Total" value={upperTotalScore} clickable />
         <ScoreCell label="Lower Total" value={lowerTotalScore} clickable />
+        <ScoreCell label="Upper Total" value={upperTotalScore} clickable />
       </View>
     </View>
   );

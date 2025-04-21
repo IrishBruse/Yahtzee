@@ -156,11 +156,11 @@ export default function YahtzeeGame() {
   };
 
   const rollDice = async () => {
-    console.log("rollDice");
     if (rollsLeft > 0 && !rollingDice) {
       setRollingDice(true);
       setRollsLeft((prevRollsLeft) => prevRollsLeft - 1);
 
+      // const newDiceValues = [0, 1, 2, 3, 4];
       const newDiceValues = [...diceValues];
       for (let i = 0; i < NUMBER_OF_DICE; i++) {
         if (!diceHeld[i]) {
@@ -172,7 +172,6 @@ export default function YahtzeeGame() {
       setDiceValues(newDiceValues);
 
       // Simulate animation delay
-      await new Promise((resolve) => setTimeout(resolve, 200));
       setRollingDice(false);
       updateScores(newDiceValues);
     }
@@ -193,7 +192,7 @@ export default function YahtzeeGame() {
       }
     }
 
-    console.log({ currentDiceValues });
+    console.log({ newScoreValues });
 
     const diceFaceCount = Array(6).fill(0);
     for (const value of currentDiceValues) {
@@ -213,10 +212,10 @@ export default function YahtzeeGame() {
     currentScoreValues: number[],
     totalDiceValue: number
   ) => {
-    console.log(diceFaceCount);
+    console.log({ diceFaceCount });
 
     for (let i = 0; i < diceFaceCount.length; i++) {
-      const diceValue = diceFaceCount[i] * i;
+      const diceValue = diceFaceCount[i] * (i + 1);
 
       if (!lockedScores[i]) {
         currentScoreValues[i] = diceValue;
@@ -245,60 +244,19 @@ export default function YahtzeeGame() {
 
     // Small Straight
     if (!lockedScores[SMALL_STRAIGHT_INDEX]) {
-      const uniqueSortedDice = [...new Set(diceValues)].sort();
       const hasSmallStraight =
-        (uniqueSortedDice.includes(0) &&
-          uniqueSortedDice.includes(1) &&
-          uniqueSortedDice.includes(2) &&
-          uniqueSortedDice.includes(3)) ||
-        (uniqueSortedDice.includes(1) &&
-          uniqueSortedDice.includes(2) &&
-          uniqueSortedDice.includes(3) &&
-          uniqueSortedDice.includes(4)) ||
-        (uniqueSortedDice.includes(2) &&
-          uniqueSortedDice.includes(3) &&
-          uniqueSortedDice.includes(4) &&
-          uniqueSortedDice.includes(5)) ||
-        (uniqueSortedDice.includes(0) &&
-          uniqueSortedDice.includes(1) &&
-          uniqueSortedDice.includes(2) &&
-          uniqueSortedDice.includes(4)) ||
-        (uniqueSortedDice.includes(0) &&
-          uniqueSortedDice.includes(1) &&
-          uniqueSortedDice.includes(3) &&
-          uniqueSortedDice.includes(4)) ||
-        (uniqueSortedDice.includes(0) &&
-          uniqueSortedDice.includes(2) &&
-          uniqueSortedDice.includes(3) &&
-          uniqueSortedDice.includes(4)) ||
-        (uniqueSortedDice.includes(1) &&
-          uniqueSortedDice.includes(2) &&
-          uniqueSortedDice.includes(3) &&
-          uniqueSortedDice.includes(5)) ||
-        (uniqueSortedDice.includes(1) &&
-          uniqueSortedDice.includes(2) &&
-          uniqueSortedDice.includes(4) &&
-          uniqueSortedDice.includes(5)) ||
-        (uniqueSortedDice.includes(1) &&
-          uniqueSortedDice.includes(3) &&
-          uniqueSortedDice.includes(4) &&
-          uniqueSortedDice.includes(5)) ||
-        (uniqueSortedDice.includes(0) &&
-          uniqueSortedDice.includes(2) &&
-          uniqueSortedDice.includes(3) &&
-          uniqueSortedDice.includes(5)) ||
-        (uniqueSortedDice.includes(0) &&
-          uniqueSortedDice.includes(1) &&
-          uniqueSortedDice.includes(4) &&
-          uniqueSortedDice.includes(5)) ||
-        (uniqueSortedDice.includes(0) &&
-          uniqueSortedDice.includes(3) &&
-          uniqueSortedDice.includes(4) &&
-          uniqueSortedDice.includes(5)) ||
-        (uniqueSortedDice.includes(2) &&
-          uniqueSortedDice.includes(3) &&
-          uniqueSortedDice.includes(4) &&
-          uniqueSortedDice.includes(5));
+        (diceFaceCount[0] >= 1 &&
+          diceFaceCount[1] >= 1 &&
+          diceFaceCount[2] >= 1 &&
+          diceFaceCount[3] >= 1) ||
+        (diceFaceCount[1] >= 1 &&
+          diceFaceCount[2] >= 1 &&
+          diceFaceCount[3] >= 1 &&
+          diceFaceCount[4] >= 1) ||
+        (diceFaceCount[2] >= 1 &&
+          diceFaceCount[3] >= 1 &&
+          diceFaceCount[4] >= 1 &&
+          diceFaceCount[5] >= 1);
 
       if (hasSmallStraight) {
         currentScoreValues[SMALL_STRAIGHT_INDEX] = SMALL_STRAIGHT_SCORE;
@@ -307,18 +265,17 @@ export default function YahtzeeGame() {
 
     // Large Straight
     if (!lockedScores[LARGE_STRAIGHT_INDEX]) {
-      const sortedDice = [...diceValues].sort();
       const isLargeStraight =
-        (sortedDice[0] === 0 &&
-          sortedDice[1] === 1 &&
-          sortedDice[2] === 2 &&
-          sortedDice[3] === 3 &&
-          sortedDice[4] === 4) ||
-        (sortedDice[0] === 1 &&
-          sortedDice[1] === 2 &&
-          sortedDice[2] === 3 &&
-          sortedDice[3] === 4 &&
-          sortedDice[4] === 5);
+        (diceFaceCount[0] === 1 &&
+          diceFaceCount[1] === 1 &&
+          diceFaceCount[2] === 1 &&
+          diceFaceCount[3] === 1 &&
+          diceFaceCount[4] === 1) ||
+        (diceFaceCount[1] === 1 &&
+          diceFaceCount[2] === 1 &&
+          diceFaceCount[3] === 1 &&
+          diceFaceCount[4] === 1 &&
+          diceFaceCount[5] === 1);
       if (isLargeStraight) {
         currentScoreValues[LARGE_STRAIGHT_INDEX] = LARGE_STRAIGHT_SCORE;
       }
@@ -346,8 +303,6 @@ export default function YahtzeeGame() {
       }
     }
   };
-
-  console.log({ diceValues });
 
   return (
     <>
