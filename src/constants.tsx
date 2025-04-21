@@ -19,7 +19,7 @@ export const YAHTZEE_BONUS_SCORE = 100;
 export const BONUS_THRESHOLD = 63;
 export const BONUS_VALUE = 35;
 export const numbersToText = ["one", "two", "three", "four", "five", "six"];
-export const diceImages: Record<string, ImageRequireSource> = {
+export const DiceImages: Record<string, ImageRequireSource> = {
   one: require("../assets/dice/dice_one.png"),
   two: require("../assets/dice/dice_two.png"),
   three: require("../assets/dice/dice_three.png"),
@@ -27,7 +27,7 @@ export const diceImages: Record<string, ImageRequireSource> = {
   five: require("../assets/dice/dice_five.png"),
   six: require("../assets/dice/dice_six.png"),
 };
-export const scoreNameToIndex: Record<string, number> = {
+export const ScoreNameToIndex: Record<string, number> = {
   Ones: 0,
   Twos: 1,
   Threes: 2,
@@ -42,6 +42,8 @@ export const scoreNameToIndex: Record<string, number> = {
   Chance: 11,
   Yahtzee: 12,
 };
+
+export const ScoreNames = Object.keys(ScoreNameToIndex);
 
 export const Red = "#CA2222";
 export const Orange = "#EB9B3F";

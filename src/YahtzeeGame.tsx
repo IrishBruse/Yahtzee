@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -6,13 +6,27 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Pressable,
 } from "react-native";
 import {
+  CHANCE_INDEX,
+  FOUR_OF_A_KIND_INDEX,
+  FULL_HOUSE_INDEX,
+  FULL_HOUSE_SCORE,
+  LARGE_STRAIGHT_INDEX,
+  LARGE_STRAIGHT_SCORE,
   NUMBER_OF_DICE,
+  NUMBER_OF_LOWER_SCORES,
   NUMBER_OF_SCORES,
   Orange,
   Red,
-  diceImages,
+  SMALL_STRAIGHT_INDEX,
+  SMALL_STRAIGHT_SCORE,
+  THREE_OF_A_KIND_INDEX,
+  YAHTZEE_BONUS_SCORE,
+  YAHTZEE_INDEX,
+  YAHTZEE_SCORE,
+  DiceImages,
   numbersToText,
 } from "../src/constants";
 import { Scores } from "./Scores";
@@ -37,21 +51,303 @@ export default function YahtzeeGame() {
   const [bonusScore, setBonusScore] = useState<number>(0);
   const [gameOver, setGameOver] = useState<boolean>(false);
 
+  useEffect(() => {
+    if (gameOver) {
+      alert(
+        `Upper score: ${upperScoreTotal}\nLower score: ${lowerScoreTotal}\n\nTotal score: ${
+          upperScoreTotal + lowerScoreTotal
+        }`
+      );
+      restartGame();
+      setGameOver(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameOver, upperScoreTotal, lowerScoreTotal]);
+
+  const restartGame = () => {
+    console.log("restartGame");
+    setRollsLeft(3);
+    setDiceValues(Array(NUMBER_OF_DICE).fill(0));
+    setDiceHeld(Array(NUMBER_OF_DICE).fill(false));
+    setLockedScores(Array(NUMBER_OF_SCORES).fill(false));
+    setScoreValues(Array(NUMBER_OF_SCORES).fill(0));
+    setUpperScoreTotal(0);
+    setLowerScoreTotal(0);
+    setBonusScore(0);
+    nextTurn();
+  };
+
   const handleNewGame = () => {
     console.log("handleNewGame");
+    if (window.confirm("Are you sure you want to start a new game?")) {
+      restartGame();
+    }
   };
 
   const handleLockScore = async (index: number) => {
     console.log("handleLockScore", index);
+    if (rollingDice) {
+      return;
+    }
+
+    let highestScore = -1;
+    for (let i = 0; i < scoreValues.length; i++) {
+      if (
+        !lockedScores[i] &&
+        i !== CHANCE_INDEX &&
+        scoreValues[i] > highestScore
+      ) {
+        highestScore = scoreValues[i];
+      }
+    }
+
+    if (scoreValues[index] < highestScore) {
+      const confirmLock = window.confirm(
+        `Are you sure you want ${scoreValues[index]}? There is a higher score available at ${highestScore}.`
+      );
+      if (!confirmLock) {
+        return;
+      }
+    }
+
+    const newLockedScores = [...lockedScores];
+    newLockedScores[index] = true;
+    setLockedScores(newLockedScores);
+
+    let newUpperScore = 0;
+    let newLowerScore = 0;
+    let isGameOver = true;
+    const updatedScoreValues = [...scoreValues];
+
+    for (let i = 0; i < updatedScoreValues.length; i++) {
+      if (newLockedScores[i]) {
+        if (i >= NUMBER_OF_LOWER_SCORES) {
+          newLowerScore += updatedScoreValues[i];
+        } else {
+          newUpperScore += updatedScoreValues[i];
+        }
+      } else {
+        isGameOver = false;
+      }
+    }
+
+    setUpperScoreTotal(newUpperScore);
+    setLowerScoreTotal(newLowerScore);
+
+    const UPPER_SCORE_BONUS_THRESHOLD = 63;
+    const BONUS_SCORE = 35;
+    if (newUpperScore >= UPPER_SCORE_BONUS_THRESHOLD) {
+      setBonusScore(BONUS_SCORE);
+    } else {
+      setBonusScore(0);
+    }
+
+    nextTurn();
+    if (isGameOver) {
+      setGameOver(true);
+    }
   };
 
   const holdDice = (index: number) => {
     console.log("handleHoldDice", index);
+    const newDiceHeld = [...diceHeld];
+    newDiceHeld[index] = !newDiceHeld[index];
+    setDiceHeld(newDiceHeld);
   };
 
   const rollDice = async () => {
     console.log("rollDice");
+    if (rollsLeft > 0 && !rollingDice) {
+      setRollingDice(true);
+      setRollsLeft((prevRollsLeft) => prevRollsLeft - 1);
+
+      const newDiceValues = [...diceValues];
+      for (let i = 0; i < NUMBER_OF_DICE; i++) {
+        if (!diceHeld[i]) {
+          // Simulate a delay for animation effect
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          newDiceValues[i] = Math.floor(Math.random() * 6); // 0 to 5
+        }
+      }
+      setDiceValues(newDiceValues);
+
+      // Simulate animation delay
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      setRollingDice(false);
+      updateScores(newDiceValues);
+    }
   };
+
+  const nextTurn = () => {
+    setDiceHeld(Array(NUMBER_OF_DICE).fill(false));
+    setRollsLeft(3);
+    updateScores(diceValues);
+    rollDice();
+  };
+
+  const updateScores = (currentDiceValues: number[]) => {
+    const newScoreValues = [...scoreValues];
+    for (let i = 0; i < newScoreValues.length; i++) {
+      if (!lockedScores[i]) {
+        newScoreValues[i] = 0;
+      }
+    }
+
+    console.log({ currentDiceValues });
+
+    const diceFaceCount = Array(6).fill(0);
+    for (const value of currentDiceValues) {
+      diceFaceCount[value]++;
+    }
+
+    calculateScores(
+      diceFaceCount,
+      newScoreValues,
+      currentDiceValues.reduce((sum, val) => sum + val + 1, 0)
+    );
+    setScoreValues(newScoreValues);
+  };
+
+  const calculateScores = (
+    diceFaceCount: number[],
+    currentScoreValues: number[],
+    totalDiceValue: number
+  ) => {
+    console.log(diceFaceCount);
+
+    for (let i = 0; i < diceFaceCount.length; i++) {
+      const diceValue = diceFaceCount[i] * i;
+
+      if (!lockedScores[i]) {
+        currentScoreValues[i] = diceValue;
+      }
+    }
+
+    if (
+      !lockedScores[THREE_OF_A_KIND_INDEX] &&
+      diceFaceCount.some((count) => count >= 3)
+    ) {
+      currentScoreValues[THREE_OF_A_KIND_INDEX] = totalDiceValue;
+    }
+
+    if (
+      !lockedScores[FOUR_OF_A_KIND_INDEX] &&
+      diceFaceCount.some((count) => count >= 4)
+    ) {
+      currentScoreValues[FOUR_OF_A_KIND_INDEX] = totalDiceValue;
+    }
+
+    const hasThree = diceFaceCount.some((count) => count === 3);
+    const hasTwo = diceFaceCount.some((count) => count === 2);
+    if (!lockedScores[FULL_HOUSE_INDEX] && hasThree && hasTwo) {
+      currentScoreValues[FULL_HOUSE_INDEX] = FULL_HOUSE_SCORE;
+    }
+
+    // Small Straight
+    if (!lockedScores[SMALL_STRAIGHT_INDEX]) {
+      const uniqueSortedDice = [...new Set(diceValues)].sort();
+      const hasSmallStraight =
+        (uniqueSortedDice.includes(0) &&
+          uniqueSortedDice.includes(1) &&
+          uniqueSortedDice.includes(2) &&
+          uniqueSortedDice.includes(3)) ||
+        (uniqueSortedDice.includes(1) &&
+          uniqueSortedDice.includes(2) &&
+          uniqueSortedDice.includes(3) &&
+          uniqueSortedDice.includes(4)) ||
+        (uniqueSortedDice.includes(2) &&
+          uniqueSortedDice.includes(3) &&
+          uniqueSortedDice.includes(4) &&
+          uniqueSortedDice.includes(5)) ||
+        (uniqueSortedDice.includes(0) &&
+          uniqueSortedDice.includes(1) &&
+          uniqueSortedDice.includes(2) &&
+          uniqueSortedDice.includes(4)) ||
+        (uniqueSortedDice.includes(0) &&
+          uniqueSortedDice.includes(1) &&
+          uniqueSortedDice.includes(3) &&
+          uniqueSortedDice.includes(4)) ||
+        (uniqueSortedDice.includes(0) &&
+          uniqueSortedDice.includes(2) &&
+          uniqueSortedDice.includes(3) &&
+          uniqueSortedDice.includes(4)) ||
+        (uniqueSortedDice.includes(1) &&
+          uniqueSortedDice.includes(2) &&
+          uniqueSortedDice.includes(3) &&
+          uniqueSortedDice.includes(5)) ||
+        (uniqueSortedDice.includes(1) &&
+          uniqueSortedDice.includes(2) &&
+          uniqueSortedDice.includes(4) &&
+          uniqueSortedDice.includes(5)) ||
+        (uniqueSortedDice.includes(1) &&
+          uniqueSortedDice.includes(3) &&
+          uniqueSortedDice.includes(4) &&
+          uniqueSortedDice.includes(5)) ||
+        (uniqueSortedDice.includes(0) &&
+          uniqueSortedDice.includes(2) &&
+          uniqueSortedDice.includes(3) &&
+          uniqueSortedDice.includes(5)) ||
+        (uniqueSortedDice.includes(0) &&
+          uniqueSortedDice.includes(1) &&
+          uniqueSortedDice.includes(4) &&
+          uniqueSortedDice.includes(5)) ||
+        (uniqueSortedDice.includes(0) &&
+          uniqueSortedDice.includes(3) &&
+          uniqueSortedDice.includes(4) &&
+          uniqueSortedDice.includes(5)) ||
+        (uniqueSortedDice.includes(2) &&
+          uniqueSortedDice.includes(3) &&
+          uniqueSortedDice.includes(4) &&
+          uniqueSortedDice.includes(5));
+
+      if (hasSmallStraight) {
+        currentScoreValues[SMALL_STRAIGHT_INDEX] = SMALL_STRAIGHT_SCORE;
+      }
+    }
+
+    // Large Straight
+    if (!lockedScores[LARGE_STRAIGHT_INDEX]) {
+      const sortedDice = [...diceValues].sort();
+      const isLargeStraight =
+        (sortedDice[0] === 0 &&
+          sortedDice[1] === 1 &&
+          sortedDice[2] === 2 &&
+          sortedDice[3] === 3 &&
+          sortedDice[4] === 4) ||
+        (sortedDice[0] === 1 &&
+          sortedDice[1] === 2 &&
+          sortedDice[2] === 3 &&
+          sortedDice[3] === 4 &&
+          sortedDice[4] === 5);
+      if (isLargeStraight) {
+        currentScoreValues[LARGE_STRAIGHT_INDEX] = LARGE_STRAIGHT_SCORE;
+      }
+    }
+
+    // Chance
+    if (!lockedScores[CHANCE_INDEX]) {
+      currentScoreValues[CHANCE_INDEX] = totalDiceValue;
+    }
+
+    // Yahtzee
+    if (
+      !lockedScores[YAHTZEE_INDEX] &&
+      diceFaceCount.some((count) => count === 5)
+    ) {
+      if (scoreValues[YAHTZEE_INDEX] >= YAHTZEE_SCORE) {
+        if (
+          lockedScores[YAHTZEE_INDEX] &&
+          scoreValues[YAHTZEE_INDEX] === YAHTZEE_SCORE
+        ) {
+          currentScoreValues[YAHTZEE_INDEX] += YAHTZEE_BONUS_SCORE;
+        }
+      } else {
+        currentScoreValues[YAHTZEE_INDEX] = YAHTZEE_SCORE;
+      }
+    }
+  };
+
+  console.log({ diceValues });
 
   return (
     <>
@@ -59,7 +355,7 @@ export default function YahtzeeGame() {
         <TouchableOpacity
           onPress={handleNewGame}
           style={styles.newGameButton}
-          disabled={rollingDice}
+          disabled={rollingDice || gameOver}
         >
           <Text style={styles.newGameButtonText}>New Game</Text>
         </TouchableOpacity>
@@ -69,10 +365,12 @@ export default function YahtzeeGame() {
         </View>
         <TouchableOpacity
           onPress={() => {
-            console.log("stats");
+            alert(
+              "Game Info:\nRoll 5 dice up to 3 times per turn.\nScore points by making different combinations.\nLock scores to prevent changes.\nBonus points for upper section total >= 63.\nYahtzee (5 of a kind) scores high!"
+            );
           }}
           style={styles.newGameButton}
-          disabled={rollingDice}
+          disabled={rollingDice || gameOver}
         >
           <Text style={styles.newGameButtonText}>Game Info</Text>
         </TouchableOpacity>
@@ -82,21 +380,31 @@ export default function YahtzeeGame() {
         contentContainerStyle={styles.scrollViewContent}
       >
         <View style={styles.scoreGridContainer}>
-          <Scores />
+          <Scores
+            scoreValues={scoreValues}
+            lockedScores={lockedScores}
+            handleLockScore={handleLockScore}
+            upperTotalScore={upperScoreTotal}
+            lowerTotalScore={lowerScoreTotal}
+            bonusScore={bonusScore}
+          />
         </View>
         <View style={styles.diceContainer}>
           {diceValues.map((value, index) => (
-            <TouchableOpacity
+            <Pressable
               key={index}
               onPress={() => holdDice(index)}
-              style={styles.diceButton}
+              style={[
+                styles.diceButton,
+                diceHeld[index] ? styles.diceButtonHeld : {},
+              ]}
             >
               <Image
-                source={diceImages[numbersToText[value]]}
+                source={DiceImages[numbersToText[value]]} // Adjust index for 0-based array
                 style={styles.diceImage}
                 resizeMode="contain"
               />
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
         <TouchableOpacity
@@ -184,14 +492,9 @@ export const styles = StyleSheet.create({
     marginVertical: 5,
     height: 120,
   },
-  diceButton: {},
-  diceHeld: {
-    opacity: 0.6,
-  },
   diceImage: {
     width: 70,
     height: 70,
-    aspectRatio: 1,
   },
   rollButton: {
     backgroundColor: Red,
@@ -225,5 +528,13 @@ export const styles = StyleSheet.create({
     color: Red,
     fontWeight: "bold",
     fontSize: 16,
+  },
+  diceButton: {
+    transitionProperty: "transform",
+    transitionDuration: "150ms",
+    transitionTimingFunction: "ease-out",
+  },
+  diceButtonHeld: {
+    transform: [{ translateY: 20 }],
   },
 });
