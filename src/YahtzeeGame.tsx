@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   StyleSheet,
   View,
@@ -53,11 +54,14 @@ export default function YahtzeeGame() {
 
   useEffect(() => {
     if (gameOver) {
-      alert(
+      Alert.alert(
         `Upper score: ${upperScoreTotal}\nLower score: ${lowerScoreTotal}\n\nTotal score: ${
           upperScoreTotal + lowerScoreTotal
         }`
       );
+
+      AsyncStorage.setItem("", "");
+
       restartGame();
       setGameOver(false);
     }
@@ -164,7 +168,6 @@ export default function YahtzeeGame() {
       setRollingDice(true);
       setRollsLeft((prevRollsLeft) => prevRollsLeft - 1);
 
-      // const newDiceValues = [0, 1, 2, 3, 4];
       const newDiceValues = [...diceValues];
       for (let i = 0; i < NUMBER_OF_DICE; i++) {
         if (!diceHeld[i]) {
@@ -319,7 +322,14 @@ export default function YahtzeeGame() {
         <TouchableOpacity
           onPress={() => {
             Alert.alert(
-              "Game Info:\nRoll 5 dice up to 3 times per turn.\nScore points by making different combinations.\nLock scores to prevent changes.\nBonus points for upper section total >= 63.\nYahtzee (5 of a kind) scores high!"
+              [
+                "Game Info:",
+                "Roll 5 dice up to 3 times per turn.",
+                "Score points by making different combinations.",
+                "Lock scores to prevent changes.",
+                "Bonus points for upper section total >= 63.",
+                "Yahtzee (5 of a kind) scores high!",
+              ].join("")
             );
           }}
           style={styles.newGameButton}

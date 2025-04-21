@@ -44,3 +44,6 @@ export const ScoreNames = [
 
 export const Red = "#CA2222";
 export const Orange = "#EB9B3F";
+
+export const HIGH_SCORES_STORAGE_KEY = "@yahtzeegame:high_scores";
+export const MAX_HIGH_SCORES = 10;
