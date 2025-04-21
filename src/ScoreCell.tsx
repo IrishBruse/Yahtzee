@@ -1,29 +1,36 @@
 import React from "react";
-import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  View,
+  StyleProp,
+  ViewStyle,
+} from "react-native";
 import { Orange, Red } from "./constants";
 
 export const ScoreCell = ({
   label,
   value,
-  clickable,
+  locked,
   onPress,
+  style,
 }: {
   label: string;
   value?: number;
-  clickable: boolean;
+  locked: boolean;
   onPress?: () => void;
+  style?: StyleProp<ViewStyle> | undefined;
 }) => {
   return (
-    <View style={styles.row}>
+    <View style={styles.cell}>
       <Text style={styles.label}>{label}</Text>
       <TouchableOpacity
         onPress={onPress}
-        style={[styles.scoreButton, clickable ? styles.scoreButtonLocked : {}]}
+        style={[styles.scoreButton, locked ? styles.scoreButtonLocked : {}]}
         disabled={false}
       >
-        <Text
-          style={[styles.scoreText, clickable ? styles.scoreTextLocked : {}]}
-        >
+        <Text style={[styles.scoreText, locked ? styles.scoreTextLocked : {}]}>
           {value ?? "-"}
         </Text>
       </TouchableOpacity>
@@ -32,7 +39,7 @@ export const ScoreCell = ({
 };
 
 export const styles = StyleSheet.create({
-  row: {
+  cell: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
@@ -63,8 +70,8 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 10,
     alignItems: "center",
     justifyContent: "center",
-    width: 80,
-    minHeight: 68,
+    width: 60,
+    height: 50,
   },
   scoreButtonLocked: {
     backgroundColor: "transparent",

@@ -407,7 +407,7 @@ export const styles = StyleSheet.create({
     borderRadius: 5,
   },
   newGameButtonText: {
-    color: "#EA8D23",
+    color: Orange,
     fontWeight: "bold",
   },
   titleGroup: {
