@@ -22,7 +22,7 @@ export const ScoreCell = ({
     <TouchableOpacity
       onPress={onPress}
       style={[styles.scoreButton, locked ? styles.scoreButtonLocked : {}]}
-      disabled={false}
+      disabled={locked}
     >
       <Text style={[styles.scoreText, locked ? styles.scoreTextLocked : {}]}>
         {value ?? "-"}

@@ -23,13 +23,11 @@ export const Scores = ({
   lowerTotalScore,
 }: ScoresProps) => {
   return (
-    <View style={styles.grid}>
-      <View style={styles.col} key="upper-labels">
+    <View style={styles.grid} key="scores">
+      <View style={styles.col}>
         {upperSectionIndices.map((index) => (
-          <View style={styles.labelContainer}>
-            <Text style={styles.label} key={`upperLabel-${index}`}>
-              {ScoreNames[index]}
-            </Text>
+          <View style={styles.labelContainer} key={`upperLabel-${index}`}>
+            <Text style={styles.label}>{ScoreNames[index]}</Text>
           </View>
         ))}
         <View style={styles.labelContainer} key="upperLabel-bonus">
@@ -40,7 +38,7 @@ export const Scores = ({
         </View>
       </View>
 
-      <View style={styles.colCell} key="upper-buttons">
+      <View style={styles.colCell}>
         {upperSectionIndices.map((index) => (
           <ScoreCell
             value={scoreValues[index]}
@@ -53,12 +51,10 @@ export const Scores = ({
         <ScoreCell value={upperTotalScore} locked key="upperCell-total" />
       </View>
 
-      <View style={styles.col} key="lower-labels">
+      <View style={styles.col}>
         {lowerSectionIndices.map((index) => (
-          <View style={styles.labelContainer}>
-            <Text style={styles.label} key={`lowerLabel-${index}`}>
-              {ScoreNames[index]}
-            </Text>
+          <View style={styles.labelContainer} key={`lowerLabel-${index}`}>
+            <Text style={styles.label}>{ScoreNames[index]}</Text>
           </View>
         ))}
         <View style={styles.labelContainer} key="upperLabel-bonus">
@@ -66,7 +62,7 @@ export const Scores = ({
         </View>
       </View>
 
-      <View style={styles.colCell} key="lower-buttons">
+      <View style={styles.colCell}>
         {lowerSectionIndices.map((index) => (
           <ScoreCell
             value={scoreValues[index]}
@@ -75,7 +71,7 @@ export const Scores = ({
             key={`lowerCell-${index}`}
           />
         ))}
-        <ScoreCell value={upperTotalScore} locked key="lowerCell-total" />
+        <ScoreCell value={lowerTotalScore} locked key="lowerCell-total" />
       </View>
     </View>
   );

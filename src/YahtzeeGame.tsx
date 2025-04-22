@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   StyleSheet,
   View,
@@ -52,16 +51,16 @@ export default function YahtzeeGame() {
   const [bonusScore, setBonusScore] = useState<number>(0);
   const [gameOver, setGameOver] = useState<boolean>(false);
 
+  console.log(lockedScores);
+  console.log(scoreValues);
+
   useEffect(() => {
     if (gameOver) {
-      Alert.alert(
+      alert(
         `Upper score: ${upperScoreTotal}\nLower score: ${lowerScoreTotal}\n\nTotal score: ${
           upperScoreTotal + lowerScoreTotal
         }`
       );
-
-      AsyncStorage.setItem("", "");
-
       restartGame();
       setGameOver(false);
     }
@@ -94,9 +93,16 @@ export default function YahtzeeGame() {
 
   const handleLockScore = async (index: number) => {
     console.log("handleLockScore", index);
+    console.log(rollingDice);
+
     if (rollingDice) {
       return;
     }
+
+    setLockedScores((prev) => {
+      prev[index] = true;
+      return lockedScores;
+    });
 
     let highestScore = -1;
     for (let i = 0; i < scoreValues.length; i++) {
@@ -109,26 +115,13 @@ export default function YahtzeeGame() {
       }
     }
 
-    if (scoreValues[index] < highestScore) {
-      const confirmLock = window.confirm(
-        `Are you sure you want ${scoreValues[index]}? There is a higher score available at ${highestScore}.`
-      );
-      if (!confirmLock) {
-        return;
-      }
-    }
-
-    const newLockedScores = [...lockedScores];
-    newLockedScores[index] = true;
-    setLockedScores(newLockedScores);
-
     let newUpperScore = 0;
     let newLowerScore = 0;
     let isGameOver = true;
     const updatedScoreValues = [...scoreValues];
 
     for (let i = 0; i < updatedScoreValues.length; i++) {
-      if (newLockedScores[i]) {
+      if (i === index) {
         if (i >= NUMBER_OF_LOWER_SCORES) {
           newLowerScore += updatedScoreValues[i];
         } else {
@@ -168,6 +161,7 @@ export default function YahtzeeGame() {
       setRollingDice(true);
       setRollsLeft((prevRollsLeft) => prevRollsLeft - 1);
 
+      // const newDiceValues = [0, 1, 2, 3, 4];
       const newDiceValues = [...diceValues];
       for (let i = 0; i < NUMBER_OF_DICE; i++) {
         if (!diceHeld[i]) {
@@ -215,6 +209,8 @@ export default function YahtzeeGame() {
     currentScoreValues: number[],
     totalDiceValue: number
   ) => {
+    console.log("lockedScores", lockedScores);
+
     for (let i = 0; i < diceFaceCount.length; i++) {
       const diceValue = diceFaceCount[i] * (i + 1);
 
@@ -282,6 +278,8 @@ export default function YahtzeeGame() {
       }
     }
 
+    console.log("chance", lockedScores[CHANCE_INDEX], totalDiceValue);
+
     // Chance
     if (!lockedScores[CHANCE_INDEX]) {
       currentScoreValues[CHANCE_INDEX] = totalDiceValue;
@@ -329,7 +327,7 @@ export default function YahtzeeGame() {
                 "Lock scores to prevent changes.",
                 "Bonus points for upper section total >= 63.",
                 "Yahtzee (5 of a kind) scores high!",
-              ].join("")
+              ].join("\n")
             );
           }}
           style={styles.newGameButton}

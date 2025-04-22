@@ -9,6 +9,7 @@ export const SMALL_STRAIGHT_INDEX = 9;
 export const LARGE_STRAIGHT_INDEX = 10;
 export const CHANCE_INDEX = 11;
 export const YAHTZEE_INDEX = 12;
+
 export const FULL_HOUSE_SCORE = 25;
 export const SMALL_STRAIGHT_SCORE = 30;
 export const LARGE_STRAIGHT_SCORE = 40;
