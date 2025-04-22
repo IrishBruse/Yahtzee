@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
   StyleSheet,
   View,
@@ -28,8 +30,15 @@ import {
   YAHTZEE_INDEX,
   YAHTZEE_SCORE,
   DiceImages,
+  HIGH_SCORES_STORAGE_KEY,
+  MAX_HIGH_SCORES,
 } from "../src/constants";
 import { Scores } from "./Scores";
+
+type HighscoreItem = {
+  rank: number;
+  score: number;
+};
 
 export default function YahtzeeGame() {
   const [diceValues, setDiceValues] = useState<number[]>(
@@ -50,18 +59,86 @@ export default function YahtzeeGame() {
   const [lowerScoreTotal, setLowerScoreTotal] = useState<number>(0);
   const [bonusScore, setBonusScore] = useState<number>(0);
   const [gameOver, setGameOver] = useState<boolean>(false);
+
   const [showHighscore, setShowHighscore] = useState<boolean>(false);
+  const [highscores, setHighscores] = useState<any[]>([]);
+
+  async function loadHighscores() {
+    try {
+      const scoresJson = await AsyncStorage.getItem(HIGH_SCORES_STORAGE_KEY);
+      if (scoresJson !== null) {
+        // Parse the JSON string into an array
+        const scores: HighscoreItem[] = JSON.parse(scoresJson);
+        setHighscores(scores);
+      } else {
+        // No scores saved yet
+        setHighscores([]);
+      }
+    } catch (error) {
+      console.error("Failed to load high scores:", error);
+      // Handle the error appropriately in your app
+      setHighscores([]); // Start with an empty list on error
+    }
+  }
+
+  async function addHighscore(newScore: number) {
+    try {
+      // 1. Load existing scores (or use current state if preferred, but loading is safer)
+      const existingScoresJson = await AsyncStorage.getItem(
+        HIGH_SCORES_STORAGE_KEY
+      );
+      const existingScores: HighscoreItem[] =
+        existingScoresJson !== null ? JSON.parse(existingScoresJson) : [];
+
+      // Create a temporary list with just the scores (rank is temporary)
+      const scoresOnly = existingScores.map((item) => item.score);
+
+      // 2. Add the new score
+      scoresOnly.push(newScore);
+
+      // 3. Sort in descending order
+      scoresOnly.sort((a, b) => b - a);
+
+      // 4. Keep only the top N scores
+      const topScores = scoresOnly.slice(0, MAX_HIGH_SCORES);
+
+      // 5. Assign ranks and format for state/storage
+      const updatedHighscores: HighscoreItem[] = topScores.map(
+        (score, index) => ({
+          rank: index + 1,
+          score: score,
+        })
+      );
+
+      // 6. Save the updated list back to AsyncStorage
+      await AsyncStorage.setItem(
+        HIGH_SCORES_STORAGE_KEY,
+        JSON.stringify(updatedHighscores)
+      );
+
+      // 7. Update the component's state
+      setHighscores(updatedHighscores);
+    } catch (error) {
+      console.error("Failed to save high score:", error);
+      // Handle the error appropriately
+    }
+  }
+
+  useEffect(() => {
+    loadHighscores();
+  }, []);
 
   console.log(lockedScores);
   console.log(scoreValues);
 
   useEffect(() => {
     if (gameOver) {
-      alert(
+      Alert.alert(
         `Upper score: ${upperScoreTotal}\nLower score: ${lowerScoreTotal}\n\nTotal score: ${
           upperScoreTotal + lowerScoreTotal
         }`
       );
+      addHighscore(upperScoreTotal + lowerScoreTotal);
       restartGame();
       setGameOver(false);
     }
@@ -329,19 +406,28 @@ export default function YahtzeeGame() {
       </View>
       <View>
         {showHighscore ? (
-          <View>
+          <View style={highscoreStyles.highscoreContainer}>
+            <Text style={highscoreStyles.highscoreTitle}>Highscores</Text>
             <FlatList
-              data={[
-                { index: 1, title: "200" },
-                { index: 2, title: "100" },
-                { index: 3, title: "50" },
-              ]}
+              data={highscores}
+              keyExtractor={(item, index) => index.toString()}
               renderItem={({ item }) => (
-                <Text key={item.index}>
-                  Score {item.index}:{item.title}
-                </Text>
+                <View style={highscoreStyles.highscoreItem}>
+                  <Text style={highscoreStyles.highscoreRank}>
+                    {item.rank}.
+                  </Text>
+                  <Text style={highscoreStyles.highscoreScore}>
+                    {item.score}
+                  </Text>
+                </View>
               )}
             />
+            <TouchableOpacity
+              onPress={() => setShowHighscore(false)}
+              style={highscoreStyles.closeButton}
+            >
+              <Text style={highscoreStyles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <Scores
@@ -498,5 +584,53 @@ export const styles = StyleSheet.create({
     width: "100%",
     position: "absolute",
     bottom: 0,
+  },
+});
+
+const highscoreStyles = StyleSheet.create({
+  highscoreContainer: {
+    backgroundColor: Orange,
+    padding: 20,
+    borderRadius: 10,
+    marginHorizontal: "auto",
+    marginTop: 20,
+    alignItems: "center",
+    width: "60%",
+  },
+  highscoreTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: Red,
+    marginBottom: 15,
+  },
+  highscoreItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: Red,
+  },
+  highscoreRank: {
+    fontSize: 18,
+    color: Red,
+    fontWeight: "bold",
+    marginRight: 10,
+  },
+  highscoreScore: {
+    fontSize: 18,
+    color: Red,
+  },
+  closeButton: {
+    backgroundColor: Red,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginTop: 20,
+  },
+  closeButtonText: {
+    color: Orange,
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
