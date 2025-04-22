@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   labelContainer: {
-    height: 50,
+    minHeight: 50,
     flex: 1,
     justifyContent: "center",
   },

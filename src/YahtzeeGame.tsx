@@ -5,9 +5,9 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  ScrollView,
   Pressable,
   Alert,
+  FlatList,
 } from "react-native";
 import {
   CHANCE_INDEX,
@@ -50,6 +50,7 @@ export default function YahtzeeGame() {
   const [lowerScoreTotal, setLowerScoreTotal] = useState<number>(0);
   const [bonusScore, setBonusScore] = useState<number>(0);
   const [gameOver, setGameOver] = useState<boolean>(false);
+  const [showHighscore, setShowHighscore] = useState<boolean>(false);
 
   console.log(lockedScores);
   console.log(scoreValues);
@@ -118,14 +119,13 @@ export default function YahtzeeGame() {
     let newUpperScore = 0;
     let newLowerScore = 0;
     let isGameOver = true;
-    const updatedScoreValues = [...scoreValues];
 
-    for (let i = 0; i < updatedScoreValues.length; i++) {
-      if (i === index) {
+    for (let i = 0; i < scoreValues.length; i++) {
+      if (i === index || lockedScores[i]) {
         if (i >= NUMBER_OF_LOWER_SCORES) {
-          newLowerScore += updatedScoreValues[i];
+          newLowerScore += scoreValues[i];
         } else {
-          newUpperScore += updatedScoreValues[i];
+          newUpperScore += scoreValues[i];
         }
       } else {
         isGameOver = false;
@@ -319,69 +319,77 @@ export default function YahtzeeGame() {
         </View>
         <TouchableOpacity
           onPress={() => {
-            Alert.alert(
-              [
-                "Game Info:",
-                "Roll 5 dice up to 3 times per turn.",
-                "Score points by making different combinations.",
-                "Lock scores to prevent changes.",
-                "Bonus points for upper section total >= 63.",
-                "Yahtzee (5 of a kind) scores high!",
-              ].join("\n")
-            );
+            setShowHighscore((prev) => !prev);
           }}
           style={styles.newGameButton}
           disabled={rollingDice || gameOver}
         >
-          <Text style={styles.newGameButtonText}>Game Info</Text>
+          <Text style={styles.newGameButtonText}>Highscores</Text>
         </TouchableOpacity>
       </View>
-      <ScrollView>
-        <Scores
-          scoreValues={scoreValues}
-          lockedScores={lockedScores}
-          handleLockScore={handleLockScore}
-          upperTotalScore={upperScoreTotal}
-          lowerTotalScore={lowerScoreTotal}
-          bonusScore={bonusScore}
-        />
-        <View>
-          <View style={styles.diceContainer}>
-            {diceValues.map((value, index) => (
-              <Pressable
-                key={index}
-                onPress={() => holdDice(index)}
-                style={[
-                  styles.diceButton,
-                  diceHeld[index] ? styles.diceButtonHeld : {},
-                ]}
-              >
-                <Image
-                  source={DiceImages[value]}
-                  style={styles.diceImage}
-                  resizeMode="contain"
-                />
-              </Pressable>
-            ))}
+      <View>
+        {showHighscore ? (
+          <View>
+            <FlatList
+              data={[
+                { index: 1, title: "200" },
+                { index: 2, title: "100" },
+                { index: 3, title: "50" },
+              ]}
+              renderItem={({ item }) => (
+                <Text key={item.index}>
+                  Score {item.index}:{item.title}
+                </Text>
+              )}
+            />
           </View>
-          <TouchableOpacity
-            onPress={rollDice}
-            disabled={rollsLeft <= 0 || rollingDice || gameOver}
-            style={[
-              styles.rollButton,
-              rollsLeft <= 0 || rollingDice || gameOver
-                ? styles.rollButtonDisabled
-                : {},
-            ]}
-          >
-            <Text style={styles.rollButtonText}>
-              {rollingDice
-                ? "Rolling..."
-                : `${rollsLeft} Roll${rollsLeft !== 1 ? "s" : ""} left`}
-            </Text>
-          </TouchableOpacity>
+        ) : (
+          <Scores
+            scoreValues={scoreValues}
+            lockedScores={lockedScores}
+            handleLockScore={handleLockScore}
+            upperTotalScore={upperScoreTotal}
+            lowerTotalScore={lowerScoreTotal}
+            bonusScore={bonusScore}
+          />
+        )}
+      </View>
+      <View style={styles.dice}>
+        <View style={styles.diceContainer}>
+          {diceValues.map((value, index) => (
+            <Pressable
+              key={index}
+              onPress={() => holdDice(index)}
+              style={[
+                styles.diceButton,
+                diceHeld[index] ? styles.diceButtonHeld : {},
+              ]}
+            >
+              <Image
+                source={DiceImages[value]}
+                style={styles.diceImage}
+                resizeMode="contain"
+              />
+            </Pressable>
+          ))}
         </View>
-      </ScrollView>
+        <TouchableOpacity
+          onPress={rollDice}
+          disabled={rollsLeft <= 0 || rollingDice || gameOver}
+          style={[
+            styles.rollButton,
+            rollsLeft <= 0 || rollingDice || gameOver
+              ? styles.rollButtonDisabled
+              : {},
+          ]}
+        >
+          <Text style={styles.rollButtonText}>
+            {rollingDice
+              ? "Rolling..."
+              : `${rollsLeft} Roll${rollsLeft !== 1 ? "s" : ""} left`}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </>
   );
 }
@@ -396,8 +404,7 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginHorizontal: 10,
-    marginVertical: 5,
-    paddingHorizontal: 5,
+    marginBottom: 40,
   },
   newGameButton: {
     backgroundColor: Red,
@@ -486,5 +493,10 @@ export const styles = StyleSheet.create({
   },
   diceButtonHeld: {
     transform: [{ translateY: 20 }],
+  },
+  dice: {
+    width: "100%",
+    position: "absolute",
+    bottom: 0,
   },
 });
