@@ -130,9 +130,6 @@ export default function YahtzeeGame() {
     loadHighscores();
   }, []);
 
-  console.log(lockedScores);
-  console.log(scoreValues);
-
   useEffect(() => {
     if (gameOver) {
       Alert.alert(
@@ -143,12 +140,11 @@ export default function YahtzeeGame() {
         [
           {
             text: "OK",
-            onPress: () => console.log("OK Pressed"),
+            onPress: () => {},
           },
         ],
         { cancelable: false }
       );
-      console.log("game over");
 
       addHighscore(upperScoreTotal + lowerScoreTotal);
       restartGame();
@@ -182,28 +178,15 @@ export default function YahtzeeGame() {
   }, []);
 
   const handleLockScore = async (index: number) => {
-    console.log("handleLockScore", index);
-    console.log(rollingDice);
-
     if (rollingDice) {
       return;
     }
 
     setLockedScores((prev) => {
-      prev[index] = true;
-      return lockedScores;
+      const newLocked = [...prev];
+      newLocked[index] = true;
+      return newLocked;
     });
-
-    let highestScore = -1;
-    for (let i = 0; i < scoreValues.length; i++) {
-      if (
-        !lockedScores[i] &&
-        i !== CHANCE_INDEX &&
-        scoreValues[i] > highestScore
-      ) {
-        highestScore = scoreValues[i];
-      }
-    }
 
     let newUpperScore = 0;
     let newLowerScore = 0;
@@ -239,7 +222,6 @@ export default function YahtzeeGame() {
   };
 
   const holdDice = (index: number) => {
-    console.log("handleHoldDice", index);
     const newDiceHeld = [...diceHeld];
     newDiceHeld[index] = !newDiceHeld[index];
     setDiceHeld(newDiceHeld);
@@ -298,8 +280,6 @@ export default function YahtzeeGame() {
     currentScoreValues: number[],
     totalDiceValue: number
   ) => {
-    console.log("lockedScores", lockedScores);
-
     for (let i = 0; i < diceFaceCount.length; i++) {
       const diceValue = diceFaceCount[i] * (i + 1);
 
@@ -366,8 +346,6 @@ export default function YahtzeeGame() {
         currentScoreValues[LARGE_STRAIGHT_INDEX] = LARGE_STRAIGHT_SCORE;
       }
     }
-
-    console.log("chance", lockedScores[CHANCE_INDEX], totalDiceValue);
 
     // Chance
     if (!lockedScores[CHANCE_INDEX]) {
@@ -567,7 +545,7 @@ export const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   rollButtonDisabled: {
-    backgroundColor: Orange,
+    opacity: 0.8,
   },
   grandTotalRow: {
     flexDirection: "row",
