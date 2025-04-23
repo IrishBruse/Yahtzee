@@ -9,6 +9,7 @@ import {
   Pressable,
   Alert,
   FlatList,
+  Platform,
 } from "react-native";
 import {
   CHANCE_INDEX,
@@ -34,18 +35,10 @@ import { Scores } from "./Scores";
 import { addHighscore, HighscoreItem, loadHighscores } from "./Utility";
 
 export default function YahtzeeGame() {
-  const [diceValues, setDiceValues] = useState<number[]>(
-    Array(NUMBER_OF_DICE).fill(0)
-  );
-  const [diceHeld, setDiceHeld] = useState<boolean[]>(
-    Array(NUMBER_OF_DICE).fill(false)
-  );
-  const [scoreValues, setScoreValues] = useState<number[]>(
-    Array(NUMBER_OF_SCORES).fill(0)
-  );
-  const [lockedScores, setLockedScores] = useState<boolean[]>(
-    Array(NUMBER_OF_SCORES).fill(false)
-  );
+  const [diceValues, setDiceValues] = useState<number[]>([]);
+  const [diceHeld, setDiceHeld] = useState<boolean[]>([]);
+  const [scoreValues, setScoreValues] = useState<number[]>([]);
+  const [lockedScores, setLockedScores] = useState<boolean[]>([]);
   const [rollsLeft, setRollsLeft] = useState<number>(3);
   const [rollingDice, setRollingDice] = useState<boolean>(false);
   const [upperScoreTotal, setUpperScoreTotal] = useState<number>(0);
@@ -98,7 +91,12 @@ export default function YahtzeeGame() {
   };
 
   const handleNewGame = () => {
-    Alert.alert("Are you sure you want to start a new game?", undefined, [
+    if (Platform.OS === "web") {
+      restartGame();
+      return;
+    }
+
+    Alert.alert("Are you sure you want to start a new game?", "", [
       { text: "Yes", onPress: restartGame, style: "destructive" },
       { text: "No", style: "cancel" },
     ]);
