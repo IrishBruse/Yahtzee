@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
   StyleSheet,
@@ -30,16 +29,9 @@ import {
   YAHTZEE_INDEX,
   YAHTZEE_SCORE,
   DiceImages,
-  HIGH_SCORES_STORAGE_KEY,
-  MAX_HIGH_SCORES,
 } from "../src/constants";
 import { Scores } from "./Scores";
-
-type HighscoreItem = {
-  rank: number;
-  score: number;
-  date: number;
-};
+import { addHighscore, HighscoreItem, loadHighscores } from "./Utility";
 
 export default function YahtzeeGame() {
   const [diceValues, setDiceValues] = useState<number[]>(
@@ -62,72 +54,11 @@ export default function YahtzeeGame() {
   const [gameOver, setGameOver] = useState<boolean>(false);
 
   const [showHighscore, setShowHighscore] = useState<boolean>(false);
-  const [highscores, setHighscores] = useState<any[]>([]);
-
-  async function loadHighscores() {
-    try {
-      const scoresJson = await AsyncStorage.getItem(HIGH_SCORES_STORAGE_KEY);
-      if (scoresJson !== null) {
-        // Parse the JSON string into an array
-        const scores: HighscoreItem[] = JSON.parse(scoresJson);
-        setHighscores(scores);
-      } else {
-        // No scores saved yet
-        setHighscores([]);
-      }
-    } catch (error) {
-      console.error("Failed to load high scores:", error);
-      // Handle the error appropriately in your app
-      setHighscores([]); // Start with an empty list on error
-    }
-  }
-
-  async function addHighscore(newScore: number) {
-    try {
-      // 1. Load existing scores (or use current state if preferred, but loading is safer)
-      const existingScoresJson = await AsyncStorage.getItem(
-        HIGH_SCORES_STORAGE_KEY
-      );
-      const existingScores: HighscoreItem[] =
-        existingScoresJson !== null ? JSON.parse(existingScoresJson) : [];
-
-      // Create a temporary list with just the scores (rank is temporary)
-      const scoresOnly = existingScores.map((item) => item.score);
-
-      // 2. Add the new score
-      scoresOnly.push(newScore);
-
-      // 3. Sort in descending order
-      scoresOnly.sort((a, b) => b - a);
-
-      // 4. Keep only the top N scores
-      const topScores = scoresOnly.slice(0, MAX_HIGH_SCORES);
-
-      // 5. Assign ranks and format for state/storage
-      const updatedHighscores: HighscoreItem[] = topScores.map(
-        (score, index) => ({
-          rank: index + 1,
-          score: score,
-          date: Date.now(),
-        })
-      );
-
-      // 6. Save the updated list back to AsyncStorage
-      await AsyncStorage.setItem(
-        HIGH_SCORES_STORAGE_KEY,
-        JSON.stringify(updatedHighscores)
-      );
-
-      // 7. Update the component's state
-      setHighscores(updatedHighscores);
-    } catch (error) {
-      console.error("Failed to save high score:", error);
-      // Handle the error appropriately
-    }
-  }
+  const [highscores, setHighscores] = useState<HighscoreItem[]>([]);
 
   useEffect(() => {
-    loadHighscores();
+    restartGame();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -147,6 +78,7 @@ export default function YahtzeeGame() {
       );
 
       addHighscore(upperScoreTotal + lowerScoreTotal);
+
       restartGame();
       setGameOver(false);
     }
@@ -171,11 +103,6 @@ export default function YahtzeeGame() {
       { text: "No", style: "cancel" },
     ]);
   };
-
-  useEffect(() => {
-    restartGame();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleLockScore = async (index: number) => {
     if (rollingDice) {
@@ -350,36 +277,36 @@ export default function YahtzeeGame() {
     [calculateScores, lockedScores, scoreValues]
   );
 
-  const rollDice = useCallback(async () => {
-    if (rollsLeft > 0 && !rollingDice) {
-      console.log("Roll", diceHeld);
-      setRollingDice(true);
-      setRollsLeft((prevRollsLeft) => prevRollsLeft - 1);
+  const rollDice = useCallback(
+    async (held: boolean[]) => {
+      if (rollsLeft > 0 && !rollingDice) {
+        setRollingDice(true);
+        setRollsLeft((prevRollsLeft) => prevRollsLeft - 1);
 
-      for (let i = 0; i < 3; i++) {
-        // const newDiceValues = [0, 1, 2, 3, 4];
-        const newDiceValues = [...diceValues];
-        for (let i = 0; i < NUMBER_OF_DICE; i++) {
-          if (!diceHeld[i]) {
-            // await new Promise((resolve) => setTimeout(resolve, 100));
-            newDiceValues[i] = Math.floor(Math.random() * 6);
+        for (let i = 0; i < 3; i++) {
+          const newDiceValues = [...diceValues];
+          for (let i = 0; i < NUMBER_OF_DICE; i++) {
+            if (!held[i]) {
+              newDiceValues[i] = Math.floor(Math.random() * 6);
+            }
           }
+          setDiceValues(newDiceValues);
+
+          await new Promise((res) => setTimeout(res, 150));
         }
-        setDiceValues(newDiceValues);
 
-        await new Promise((res) => setTimeout(res, 150));
+        setRollingDice(false);
+        updateScores(diceValues);
       }
-
-      setRollingDice(false);
-      updateScores(diceValues);
-    }
-  }, [diceHeld, diceValues, rollingDice, rollsLeft, updateScores]);
+    },
+    [diceValues, rollingDice, rollsLeft, updateScores]
+  );
 
   const nextTurn = useCallback(() => {
-    setDiceHeld(Array(NUMBER_OF_DICE).fill(false));
     setRollsLeft(3);
     updateScores(diceValues);
-    rollDice();
+    setDiceHeld(Array(NUMBER_OF_DICE).fill(false));
+    rollDice(Array(NUMBER_OF_DICE).fill(false));
   }, [diceValues, rollDice, updateScores]);
 
   return (
@@ -397,8 +324,9 @@ export default function YahtzeeGame() {
           <Text style={styles.authorText}>by Ethan</Text>
         </View>
         <TouchableOpacity
-          onPress={() => {
+          onPress={async () => {
             setShowHighscore((prev) => !prev);
+            setHighscores(await loadHighscores());
           }}
           style={styles.newGameButton}
           disabled={rollingDice || gameOver}
@@ -463,7 +391,7 @@ export default function YahtzeeGame() {
           ))}
         </View>
         <TouchableOpacity
-          onPress={rollDice}
+          onPress={() => rollDice(diceHeld)}
           disabled={rollsLeft <= 0 || rollingDice || gameOver}
           style={[
             styles.rollButton,
