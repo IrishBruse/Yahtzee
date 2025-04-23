@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
@@ -216,6 +216,7 @@ export default function YahtzeeGame() {
     }
 
     nextTurn();
+
     if (isGameOver) {
       setGameOver(true);
     }
@@ -227,148 +228,159 @@ export default function YahtzeeGame() {
     setDiceHeld(newDiceHeld);
   };
 
-  const rollDice = async () => {
+  const calculateScores = useCallback(
+    (
+      diceFaceCount: number[],
+      currentScoreValues: number[],
+      totalDiceValue: number
+    ) => {
+      for (let i = 0; i < diceFaceCount.length; i++) {
+        const diceValue = diceFaceCount[i] * (i + 1);
+
+        if (!lockedScores[i]) {
+          currentScoreValues[i] = diceValue;
+        }
+      }
+
+      if (
+        !lockedScores[THREE_OF_A_KIND_INDEX] &&
+        diceFaceCount.some((count) => count >= 3)
+      ) {
+        currentScoreValues[THREE_OF_A_KIND_INDEX] = totalDiceValue;
+      }
+
+      if (
+        !lockedScores[FOUR_OF_A_KIND_INDEX] &&
+        diceFaceCount.some((count) => count >= 4)
+      ) {
+        currentScoreValues[FOUR_OF_A_KIND_INDEX] = totalDiceValue;
+      }
+
+      const hasThree = diceFaceCount.some((count) => count === 3);
+      const hasTwo = diceFaceCount.some((count) => count === 2);
+      if (!lockedScores[FULL_HOUSE_INDEX] && hasThree && hasTwo) {
+        currentScoreValues[FULL_HOUSE_INDEX] = FULL_HOUSE_SCORE;
+      }
+
+      // Small Straight
+      if (!lockedScores[SMALL_STRAIGHT_INDEX]) {
+        const hasSmallStraight =
+          (diceFaceCount[0] >= 1 &&
+            diceFaceCount[1] >= 1 &&
+            diceFaceCount[2] >= 1 &&
+            diceFaceCount[3] >= 1) ||
+          (diceFaceCount[1] >= 1 &&
+            diceFaceCount[2] >= 1 &&
+            diceFaceCount[3] >= 1 &&
+            diceFaceCount[4] >= 1) ||
+          (diceFaceCount[2] >= 1 &&
+            diceFaceCount[3] >= 1 &&
+            diceFaceCount[4] >= 1 &&
+            diceFaceCount[5] >= 1);
+
+        if (hasSmallStraight) {
+          currentScoreValues[SMALL_STRAIGHT_INDEX] = SMALL_STRAIGHT_SCORE;
+        }
+      }
+
+      // Large Straight
+      if (!lockedScores[LARGE_STRAIGHT_INDEX]) {
+        const isLargeStraight =
+          (diceFaceCount[0] === 1 &&
+            diceFaceCount[1] === 1 &&
+            diceFaceCount[2] === 1 &&
+            diceFaceCount[3] === 1 &&
+            diceFaceCount[4] === 1) ||
+          (diceFaceCount[1] === 1 &&
+            diceFaceCount[2] === 1 &&
+            diceFaceCount[3] === 1 &&
+            diceFaceCount[4] === 1 &&
+            diceFaceCount[5] === 1);
+        if (isLargeStraight) {
+          currentScoreValues[LARGE_STRAIGHT_INDEX] = LARGE_STRAIGHT_SCORE;
+        }
+      }
+
+      // Chance
+      if (!lockedScores[CHANCE_INDEX]) {
+        currentScoreValues[CHANCE_INDEX] = totalDiceValue;
+      }
+
+      // Yahtzee
+      if (
+        !lockedScores[YAHTZEE_INDEX] &&
+        diceFaceCount.some((count) => count === 5)
+      ) {
+        if (scoreValues[YAHTZEE_INDEX] >= YAHTZEE_SCORE) {
+          if (
+            lockedScores[YAHTZEE_INDEX] &&
+            scoreValues[YAHTZEE_INDEX] === YAHTZEE_SCORE
+          ) {
+            currentScoreValues[YAHTZEE_INDEX] += YAHTZEE_BONUS_SCORE;
+          }
+        } else {
+          currentScoreValues[YAHTZEE_INDEX] = YAHTZEE_SCORE;
+        }
+      }
+    },
+    [lockedScores, scoreValues]
+  );
+
+  const updateScores = useCallback(
+    (currentDiceValues: number[]) => {
+      const newScoreValues = [...scoreValues];
+      for (let i = 0; i < newScoreValues.length; i++) {
+        if (!lockedScores[i]) {
+          newScoreValues[i] = 0;
+        }
+      }
+
+      const diceFaceCount = Array(6).fill(0);
+      for (const value of currentDiceValues) {
+        diceFaceCount[value]++;
+      }
+
+      calculateScores(
+        diceFaceCount,
+        newScoreValues,
+        currentDiceValues.reduce((sum, val) => sum + val + 1, 0)
+      );
+      setScoreValues(newScoreValues);
+    },
+    [calculateScores, lockedScores, scoreValues]
+  );
+
+  const rollDice = useCallback(async () => {
     if (rollsLeft > 0 && !rollingDice) {
+      console.log("Roll", diceHeld);
       setRollingDice(true);
       setRollsLeft((prevRollsLeft) => prevRollsLeft - 1);
 
-      // const newDiceValues = [0, 1, 2, 3, 4];
-      const newDiceValues = [...diceValues];
-      for (let i = 0; i < NUMBER_OF_DICE; i++) {
-        if (!diceHeld[i]) {
-          // await new Promise((resolve) => setTimeout(resolve, 100));
-          newDiceValues[i] = Math.floor(Math.random() * 6);
+      for (let i = 0; i < 3; i++) {
+        // const newDiceValues = [0, 1, 2, 3, 4];
+        const newDiceValues = [...diceValues];
+        for (let i = 0; i < NUMBER_OF_DICE; i++) {
+          if (!diceHeld[i]) {
+            // await new Promise((resolve) => setTimeout(resolve, 100));
+            newDiceValues[i] = Math.floor(Math.random() * 6);
+          }
         }
+        setDiceValues(newDiceValues);
+
+        await new Promise((res) => setTimeout(res, 150));
       }
-      setDiceValues(newDiceValues);
 
       setRollingDice(false);
-      updateScores(newDiceValues);
+      updateScores(diceValues);
     }
-  };
+  }, [diceHeld, diceValues, rollingDice, rollsLeft, updateScores]);
 
-  const nextTurn = () => {
+  const nextTurn = useCallback(() => {
     setDiceHeld(Array(NUMBER_OF_DICE).fill(false));
     setRollsLeft(3);
     updateScores(diceValues);
     rollDice();
-  };
-
-  const updateScores = (currentDiceValues: number[]) => {
-    const newScoreValues = [...scoreValues];
-    for (let i = 0; i < newScoreValues.length; i++) {
-      if (!lockedScores[i]) {
-        newScoreValues[i] = 0;
-      }
-    }
-
-    const diceFaceCount = Array(6).fill(0);
-    for (const value of currentDiceValues) {
-      diceFaceCount[value]++;
-    }
-
-    calculateScores(
-      diceFaceCount,
-      newScoreValues,
-      currentDiceValues.reduce((sum, val) => sum + val + 1, 0)
-    );
-    setScoreValues(newScoreValues);
-  };
-
-  const calculateScores = (
-    diceFaceCount: number[],
-    currentScoreValues: number[],
-    totalDiceValue: number
-  ) => {
-    for (let i = 0; i < diceFaceCount.length; i++) {
-      const diceValue = diceFaceCount[i] * (i + 1);
-
-      if (!lockedScores[i]) {
-        currentScoreValues[i] = diceValue;
-      }
-    }
-
-    if (
-      !lockedScores[THREE_OF_A_KIND_INDEX] &&
-      diceFaceCount.some((count) => count >= 3)
-    ) {
-      currentScoreValues[THREE_OF_A_KIND_INDEX] = totalDiceValue;
-    }
-
-    if (
-      !lockedScores[FOUR_OF_A_KIND_INDEX] &&
-      diceFaceCount.some((count) => count >= 4)
-    ) {
-      currentScoreValues[FOUR_OF_A_KIND_INDEX] = totalDiceValue;
-    }
-
-    const hasThree = diceFaceCount.some((count) => count === 3);
-    const hasTwo = diceFaceCount.some((count) => count === 2);
-    if (!lockedScores[FULL_HOUSE_INDEX] && hasThree && hasTwo) {
-      currentScoreValues[FULL_HOUSE_INDEX] = FULL_HOUSE_SCORE;
-    }
-
-    // Small Straight
-    if (!lockedScores[SMALL_STRAIGHT_INDEX]) {
-      const hasSmallStraight =
-        (diceFaceCount[0] >= 1 &&
-          diceFaceCount[1] >= 1 &&
-          diceFaceCount[2] >= 1 &&
-          diceFaceCount[3] >= 1) ||
-        (diceFaceCount[1] >= 1 &&
-          diceFaceCount[2] >= 1 &&
-          diceFaceCount[3] >= 1 &&
-          diceFaceCount[4] >= 1) ||
-        (diceFaceCount[2] >= 1 &&
-          diceFaceCount[3] >= 1 &&
-          diceFaceCount[4] >= 1 &&
-          diceFaceCount[5] >= 1);
-
-      if (hasSmallStraight) {
-        currentScoreValues[SMALL_STRAIGHT_INDEX] = SMALL_STRAIGHT_SCORE;
-      }
-    }
-
-    // Large Straight
-    if (!lockedScores[LARGE_STRAIGHT_INDEX]) {
-      const isLargeStraight =
-        (diceFaceCount[0] === 1 &&
-          diceFaceCount[1] === 1 &&
-          diceFaceCount[2] === 1 &&
-          diceFaceCount[3] === 1 &&
-          diceFaceCount[4] === 1) ||
-        (diceFaceCount[1] === 1 &&
-          diceFaceCount[2] === 1 &&
-          diceFaceCount[3] === 1 &&
-          diceFaceCount[4] === 1 &&
-          diceFaceCount[5] === 1);
-      if (isLargeStraight) {
-        currentScoreValues[LARGE_STRAIGHT_INDEX] = LARGE_STRAIGHT_SCORE;
-      }
-    }
-
-    // Chance
-    if (!lockedScores[CHANCE_INDEX]) {
-      currentScoreValues[CHANCE_INDEX] = totalDiceValue;
-    }
-
-    // Yahtzee
-    if (
-      !lockedScores[YAHTZEE_INDEX] &&
-      diceFaceCount.some((count) => count === 5)
-    ) {
-      if (scoreValues[YAHTZEE_INDEX] >= YAHTZEE_SCORE) {
-        if (
-          lockedScores[YAHTZEE_INDEX] &&
-          scoreValues[YAHTZEE_INDEX] === YAHTZEE_SCORE
-        ) {
-          currentScoreValues[YAHTZEE_INDEX] += YAHTZEE_BONUS_SCORE;
-        }
-      } else {
-        currentScoreValues[YAHTZEE_INDEX] = YAHTZEE_SCORE;
-      }
-    }
-  };
+  }, [diceValues, rollDice, updateScores]);
 
   return (
     <>
