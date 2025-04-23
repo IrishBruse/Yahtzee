@@ -38,6 +38,7 @@ import { Scores } from "./Scores";
 type HighscoreItem = {
   rank: number;
   score: number;
+  date: number;
 };
 
 export default function YahtzeeGame() {
@@ -107,6 +108,7 @@ export default function YahtzeeGame() {
         (score, index) => ({
           rank: index + 1,
           score: score,
+          date: Date.now(),
         })
       );
 
@@ -134,10 +136,20 @@ export default function YahtzeeGame() {
   useEffect(() => {
     if (gameOver) {
       Alert.alert(
+        "Game over",
         `Upper score: ${upperScoreTotal}\nLower score: ${lowerScoreTotal}\n\nTotal score: ${
           upperScoreTotal + lowerScoreTotal
-        }`
+        }`,
+        [
+          {
+            text: "OK",
+            onPress: () => console.log("OK Pressed"),
+          },
+        ],
+        { cancelable: false }
       );
+      console.log("game over");
+
       addHighscore(upperScoreTotal + lowerScoreTotal);
       restartGame();
       setGameOver(false);
@@ -242,7 +254,7 @@ export default function YahtzeeGame() {
       const newDiceValues = [...diceValues];
       for (let i = 0; i < NUMBER_OF_DICE; i++) {
         if (!diceHeld[i]) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
+          // await new Promise((resolve) => setTimeout(resolve, 100));
           newDiceValues[i] = Math.floor(Math.random() * 6);
         }
       }
@@ -409,6 +421,7 @@ export default function YahtzeeGame() {
           <View style={highscoreStyles.highscoreContainer}>
             <Text style={highscoreStyles.highscoreTitle}>Highscores</Text>
             <FlatList
+              style={highscoreStyles.highscoreList}
               data={highscores}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item }) => (
@@ -588,6 +601,9 @@ export const styles = StyleSheet.create({
 });
 
 const highscoreStyles = StyleSheet.create({
+  highscoreList: {
+    width: "100%",
+  },
   highscoreContainer: {
     backgroundColor: Orange,
     padding: 20,
