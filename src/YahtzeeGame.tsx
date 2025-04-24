@@ -17,10 +17,6 @@ import {
   FULL_HOUSE_INDEX,
   FULL_HOUSE_SCORE,
   LARGE_STRAIGHT_INDEX,
-  LARGE_STRAIGHT_SCORE,
-  NUMBER_OF_DICE,
-  NUMBER_OF_LOWER_SCORES,
-  NUMBER_OF_SCORES,
   Orange,
   Red,
   SMALL_STRAIGHT_INDEX,
@@ -30,6 +26,7 @@ import {
   YAHTZEE_INDEX,
   YAHTZEE_SCORE,
   DiceImages,
+  LARGE_STRAIGHT_SCORE,
 } from "../src/constants";
 import { Scores } from "./Scores";
 import { addHighscore, HighscoreItem, loadHighscores } from "./Utility";
@@ -88,50 +85,7 @@ export default function YahtzeeGame() {
     ]);
   };
 
-  const handleLockScore = async (index: number) => {
-    if (rollingDice) {
-      return;
-    }
-
-    setLockedScores((prev) => {
-      const newLocked = [...prev];
-      newLocked[index] = true;
-      return newLocked;
-    });
-
-    let newUpperScore = 0;
-    let newLowerScore = 0;
-    let isGameOver = true;
-
-    for (let i = 0; i < scoreValues.length; i++) {
-      if (i === index || lockedScores[i]) {
-        if (i >= NUMBER_OF_LOWER_SCORES) {
-          newLowerScore += scoreValues[i];
-        } else {
-          newUpperScore += scoreValues[i];
-        }
-      } else {
-        isGameOver = false;
-      }
-    }
-
-    setUpperScoreTotal(newUpperScore);
-    setLowerScoreTotal(newLowerScore);
-
-    const UPPER_SCORE_BONUS_THRESHOLD = 63;
-    const BONUS_SCORE = 35;
-    if (newUpperScore >= UPPER_SCORE_BONUS_THRESHOLD) {
-      setBonusScore(BONUS_SCORE);
-    } else {
-      setBonusScore(0);
-    }
-
-    nextTurn();
-
-    if (isGameOver) {
-      setGameOver(true);
-    }
-  };
+  const handleLockScore = async (index: number) => {};
 
   const holdDice = (index: number) => {
     const newDiceHeld = [...diceHeld];
@@ -234,76 +188,16 @@ export default function YahtzeeGame() {
         }
       }
     },
-    [lockedScores, scoreValues]
+    []
   );
 
-  const updateScores = useCallback(
-    (currentDiceValues: number[]) => {
-      const newScoreValues = [...scoreValues];
-      for (let i = 0; i < newScoreValues.length; i++) {
-        if (!lockedScores[i]) {
-          newScoreValues[i] = 0;
-        }
-      }
+  const updateScores = useCallback((currentDiceValues: number[]) => {}, []);
 
-      const diceFaceCount = Array(6).fill(0);
-      for (const value of currentDiceValues) {
-        diceFaceCount[value]++;
-      }
+  const rollDice = useCallback(async (held: boolean[]) => {}, []);
 
-      calculateScores(
-        diceFaceCount,
-        newScoreValues,
-        currentDiceValues.reduce((sum, val) => sum + val + 1, 0)
-      );
-      setScoreValues(newScoreValues);
-    },
-    [calculateScores, lockedScores, scoreValues]
-  );
+  const nextTurn = useCallback(() => {}, []);
 
-  const rollDice = useCallback(
-    async (held: boolean[]) => {
-      if (rollsLeft > 0 && !rollingDice) {
-        setRollingDice(true);
-        setRollsLeft((prevRollsLeft) => prevRollsLeft - 1);
-
-        let finalDiceValues = [...diceValues];
-        for (let i = 0; i < 3; i++) {
-          const newDiceValues = [...finalDiceValues];
-          for (let j = 0; j < NUMBER_OF_DICE; j++) {
-            if (!held[j]) {
-              newDiceValues[j] = Math.floor(Math.random() * 6);
-            }
-          }
-          finalDiceValues = newDiceValues;
-          setDiceValues(newDiceValues);
-
-          await new Promise((res) => setTimeout(res, 150));
-        }
-
-        setRollingDice(false);
-        updateScores(finalDiceValues);
-      }
-    },
-    [rollsLeft, rollingDice, diceValues, updateScores]
-  );
-
-  const nextTurn = useCallback(() => {
-    setRollsLeft(3);
-    rollDice(Array(NUMBER_OF_DICE).fill(false));
-  }, [rollDice]);
-
-  const restartGame = useCallback(() => {
-    setRollsLeft(3);
-    setDiceValues(Array(NUMBER_OF_DICE).fill(0));
-    setDiceHeld(Array(NUMBER_OF_DICE).fill(false));
-    setLockedScores(Array(NUMBER_OF_SCORES).fill(false));
-    setScoreValues(Array(NUMBER_OF_SCORES).fill(0));
-    setUpperScoreTotal(0);
-    setLowerScoreTotal(0);
-    setBonusScore(0);
-    nextTurn();
-  }, [nextTurn]);
+  const restartGame = useCallback(() => {}, []);
 
   return (
     <>

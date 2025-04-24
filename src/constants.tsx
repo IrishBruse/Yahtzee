@@ -1,7 +1,7 @@
 export const NUMBER_OF_DICE = 5;
 export const NUMBER_OF_DICE_FACES = 6;
 export const NUMBER_OF_SCORES = 13;
-export const NUMBER_OF_LOWER_SCORES = 6;
+export const NUMBER_OF_UPPER_SCORES = 6;
 export const THREE_OF_A_KIND_INDEX = 6;
 export const FOUR_OF_A_KIND_INDEX = 7;
 export const FULL_HOUSE_INDEX = 8;
