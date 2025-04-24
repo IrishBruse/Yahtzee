@@ -28,14 +28,14 @@ export const DiceImages = [
 ];
 
 export const ScoreNames = [
-  "One",
-  "Two",
-  "Three",
-  "Four",
-  "Five",
-  "Sixe",
-  "Three of a kind",
-  "Four of a kind",
+  "Ones",
+  "Twos",
+  "Threes",
+  "Fours",
+  "Fives",
+  "Sixes",
+  "Three of a Kind",
+  "Four of a Kind",
   "Full House",
   "Small Straight",
   "Large Straight",
