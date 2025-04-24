@@ -27,15 +27,25 @@ import {
   YAHTZEE_SCORE,
   DiceImages,
   LARGE_STRAIGHT_SCORE,
+  NUMBER_OF_DICE,
+  NUMBER_OF_SCORES,
 } from "../src/constants";
 import { Scores } from "./Scores";
 import { addHighscore, HighscoreItem, loadHighscores } from "./Utility";
 
 export default function YahtzeeGame() {
-  const [diceValues, setDiceValues] = useState<number[]>([]);
-  const [diceHeld, setDiceHeld] = useState<boolean[]>([]);
-  const [scoreValues, setScoreValues] = useState<number[]>([]);
-  const [lockedScores, setLockedScores] = useState<boolean[]>([]);
+  const [diceValues, setDiceValues] = useState<number[]>(
+    Array(NUMBER_OF_DICE).fill(0)
+  );
+  const [diceHeld, setDiceHeld] = useState<boolean[]>(
+    Array(NUMBER_OF_DICE).fill(false)
+  );
+  const [scoreValues, setScoreValues] = useState<number[]>(
+    Array(NUMBER_OF_SCORES).fill(0)
+  );
+  const [lockedScores, setLockedScores] = useState<boolean[]>(
+    Array(NUMBER_OF_SCORES).fill(false)
+  );
   const [rollsLeft, setRollsLeft] = useState<number>(3);
   const [rollingDice, setRollingDice] = useState<boolean>(false);
   const [upperScoreTotal, setUpperScoreTotal] = useState<number>(0);
