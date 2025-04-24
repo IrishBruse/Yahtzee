@@ -22,7 +22,6 @@ import {
   SMALL_STRAIGHT_INDEX,
   SMALL_STRAIGHT_SCORE,
   THREE_OF_A_KIND_INDEX,
-  YAHTZEE_BONUS_SCORE,
   YAHTZEE_INDEX,
   YAHTZEE_SCORE,
   DiceImages,
@@ -35,14 +34,22 @@ import { Scores } from "./Scores";
 import { addHighscore, HighscoreItem, loadHighscores } from "./Utility";
 
 export default function YahtzeeGame() {
-  const [diceValues, setDiceValues] = useState<number[]>([]);
-  const [diceHeld, setDiceHeld] = useState<boolean[]>([]);
-  const [scoreValues, setScoreValues] = useState<number[]>([]);
-  const [lockedScores, setLockedScores] = useState<boolean[]>([]);
+  const [diceValues, setDiceValues] = useState<number[]>(
+    Array(NUMBER_OF_DICE).fill(0)
+  );
+  const [diceHeld, setDiceHeld] = useState<boolean[]>(
+    Array(NUMBER_OF_DICE).fill(false)
+  );
+  const [scoreValues, setScoreValues] = useState<number[]>(
+    Array(NUMBER_OF_SCORES).fill(0)
+  );
+  const [lockedScores, setLockedScores] = useState<boolean[]>(
+    Array(NUMBER_OF_SCORES).fill(0)
+  );
 
   const [rollsLeft, setRollsLeft] = useState<number>(3);
 
-  const [rollingDice, setRollingDice] = useState<boolean>(false);
+  const [rollingDice, setRollingDice] = useState<boolean>(true);
 
   const [upperScoreTotal, setUpperScoreTotal] = useState<number>(0);
   const [lowerScoreTotal, setLowerScoreTotal] = useState<number>(0);
@@ -125,7 +132,7 @@ export default function YahtzeeGame() {
       diceFaceCount[element]++;
     }
 
-    const newScores = Array(NUMBER_OF_SCORES).fill(0);
+    const newScores = [...scoreValues];
 
     const totalDiceValue = diceValues.reduce((acc, curr) => acc + curr, 0);
 
@@ -157,8 +164,12 @@ export default function YahtzeeGame() {
     // Full House
     const hasThree = diceFaceCount.some((count) => count === 3);
     const hasTwo = diceFaceCount.some((count) => count === 2);
-    if (!lockedScores[FULL_HOUSE_INDEX] && hasThree && hasTwo) {
-      newScores[FULL_HOUSE_INDEX] = FULL_HOUSE_SCORE;
+    if (!lockedScores[FULL_HOUSE_INDEX]) {
+      if (hasThree && hasTwo) {
+        newScores[FULL_HOUSE_INDEX] = FULL_HOUSE_SCORE;
+      } else {
+        newScores[FULL_HOUSE_INDEX] = 0;
+      }
     }
 
     // Small Straight
@@ -179,6 +190,8 @@ export default function YahtzeeGame() {
 
       if (hasSmallStraight) {
         newScores[SMALL_STRAIGHT_INDEX] = SMALL_STRAIGHT_SCORE;
+      } else {
+        newScores[SMALL_STRAIGHT_INDEX] = 0;
       }
     }
 
@@ -197,6 +210,8 @@ export default function YahtzeeGame() {
           diceFaceCount[5] === 1);
       if (isLargeStraight) {
         newScores[LARGE_STRAIGHT_INDEX] = LARGE_STRAIGHT_SCORE;
+      } else {
+        newScores[LARGE_STRAIGHT_INDEX] = 0;
       }
     }
 
@@ -206,30 +221,20 @@ export default function YahtzeeGame() {
     }
 
     // Yahtzee
-    if (
-      !lockedScores[YAHTZEE_INDEX] &&
-      diceFaceCount.some((count) => count === 5)
-    ) {
-      if (scoreValues[YAHTZEE_INDEX] >= YAHTZEE_SCORE) {
-        if (
-          lockedScores[YAHTZEE_INDEX] &&
-          scoreValues[YAHTZEE_INDEX] === YAHTZEE_SCORE
-        ) {
-          newScores[YAHTZEE_INDEX] += YAHTZEE_BONUS_SCORE;
-        }
-      } else {
+    if (!lockedScores[YAHTZEE_INDEX]) {
+      if (diceFaceCount.some((count) => count === 5)) {
         newScores[YAHTZEE_INDEX] = YAHTZEE_SCORE;
+      } else {
+        newScores[YAHTZEE_INDEX] = 0;
       }
     }
-
-    console.log(newScores);
 
     setScoreValues([...newScores]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diceValues, rollingDice]);
 
   const rollDice = useCallback(async () => {
-    const newDiceValues = Array(NUMBER_OF_DICE).fill(0);
+    const newDiceValues = [...diceValues];
 
     setRollingDice(true);
     for (let i = 0; i < 3; i++) {
@@ -245,7 +250,7 @@ export default function YahtzeeGame() {
     setRollingDice(false);
 
     setRollsLeft((prev) => prev - 1);
-  }, [diceHeld]);
+  }, [diceHeld, diceValues]);
 
   const restartGame = useCallback(() => {
     setDiceValues(Array(NUMBER_OF_DICE).fill(0));
@@ -253,7 +258,9 @@ export default function YahtzeeGame() {
     setScoreValues(Array(NUMBER_OF_SCORES).fill(0));
     setLockedScores(Array(NUMBER_OF_SCORES).fill(false));
     setRollsLeft(3);
-  }, []);
+
+    rollDice();
+  }, [rollDice]);
 
   return (
     <>
