@@ -64,31 +64,17 @@ export default function YahtzeeGame() {
         [
           {
             text: "OK",
-            onPress: () => {},
+            onPress: () => {
+              addHighscore(upperScoreTotal + lowerScoreTotal);
+              restartGame();
+            },
           },
         ],
         { cancelable: false }
       );
-
-      addHighscore(upperScoreTotal + lowerScoreTotal);
-
-      restartGame();
-      setGameOver(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameOver, upperScoreTotal, lowerScoreTotal]);
-
-  const restartGame = () => {
-    setRollsLeft(3);
-    setDiceValues(Array(NUMBER_OF_DICE).fill(0));
-    setDiceHeld(Array(NUMBER_OF_DICE).fill(false));
-    setLockedScores(Array(NUMBER_OF_SCORES).fill(false));
-    setScoreValues(Array(NUMBER_OF_SCORES).fill(0));
-    setUpperScoreTotal(0);
-    setLowerScoreTotal(0);
-    setBonusScore(0);
-    nextTurn();
-  };
 
   const handleNewGame = () => {
     if (Platform.OS === "web") {
@@ -281,31 +267,43 @@ export default function YahtzeeGame() {
         setRollingDice(true);
         setRollsLeft((prevRollsLeft) => prevRollsLeft - 1);
 
+        let finalDiceValues = [...diceValues];
         for (let i = 0; i < 3; i++) {
-          const newDiceValues = [...diceValues];
-          for (let i = 0; i < NUMBER_OF_DICE; i++) {
-            if (!held[i]) {
-              newDiceValues[i] = Math.floor(Math.random() * 6);
+          const newDiceValues = [...finalDiceValues];
+          for (let j = 0; j < NUMBER_OF_DICE; j++) {
+            if (!held[j]) {
+              newDiceValues[j] = Math.floor(Math.random() * 6);
             }
           }
+          finalDiceValues = newDiceValues;
           setDiceValues(newDiceValues);
 
           await new Promise((res) => setTimeout(res, 150));
         }
 
         setRollingDice(false);
-        updateScores(diceValues);
+        updateScores(finalDiceValues);
       }
     },
-    [diceValues, rollingDice, rollsLeft, updateScores]
+    [rollsLeft, rollingDice, diceValues, updateScores]
   );
 
   const nextTurn = useCallback(() => {
     setRollsLeft(3);
-    updateScores(diceValues);
-    setDiceHeld(Array(NUMBER_OF_DICE).fill(false));
     rollDice(Array(NUMBER_OF_DICE).fill(false));
-  }, [diceValues, rollDice, updateScores]);
+  }, [rollDice]);
+
+  const restartGame = useCallback(() => {
+    setRollsLeft(3);
+    setDiceValues(Array(NUMBER_OF_DICE).fill(0));
+    setDiceHeld(Array(NUMBER_OF_DICE).fill(false));
+    setLockedScores(Array(NUMBER_OF_SCORES).fill(false));
+    setScoreValues(Array(NUMBER_OF_SCORES).fill(0));
+    setUpperScoreTotal(0);
+    setLowerScoreTotal(0);
+    setBonusScore(0);
+    nextTurn();
+  }, [nextTurn]);
 
   return (
     <>
