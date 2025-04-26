@@ -79,8 +79,6 @@ export const Scores = ({
 
 const styles = StyleSheet.create({
   grid: {
-    flex: 1,
-    marginHorizontal: 10,
     flexDirection: "row",
     gap: 20,
   },

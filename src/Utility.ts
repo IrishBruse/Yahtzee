@@ -60,9 +60,6 @@ export async function addHighscore(newScore: number) {
       HIGH_SCORES_STORAGE_KEY,
       JSON.stringify(updatedHighscores)
     );
-
-    // 7. Update the component's state
-    setHighscores(updatedHighscores);
   } catch (error) {
     console.error("Failed to save high score:", error);
     // Handle the error appropriately

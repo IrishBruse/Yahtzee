@@ -29,6 +29,7 @@ import {
   NUMBER_OF_DICE,
   NUMBER_OF_SCORES,
   NUMBER_OF_DICE_FACES,
+  NUMBER_OF_UPPER_SCORES,
 } from "../src/constants";
 import { Scores } from "./Scores";
 import { addHighscore, HighscoreItem, loadHighscores } from "./Utility";
@@ -44,16 +45,17 @@ export default function YahtzeeGame() {
     Array(NUMBER_OF_SCORES).fill(0)
   );
   const [lockedScores, setLockedScores] = useState<boolean[]>(
-    Array(NUMBER_OF_SCORES).fill(0)
+    Array(NUMBER_OF_SCORES).fill(false)
   );
 
   const [rollsLeft, setRollsLeft] = useState<number>(3);
 
-  const [rollingDice, setRollingDice] = useState<boolean>(true);
+  const [rollingDice, setRollingDice] = useState<boolean>(false);
 
   const [upperScoreTotal, setUpperScoreTotal] = useState<number>(0);
   const [lowerScoreTotal, setLowerScoreTotal] = useState<number>(0);
   const [bonusScore, setBonusScore] = useState<number>(0);
+
   const scoreTotal = upperScoreTotal + lowerScoreTotal + bonusScore;
 
   const [gameOver, setGameOver] = useState<boolean>(false);
@@ -61,11 +63,13 @@ export default function YahtzeeGame() {
   const [showHighscore, setShowHighscore] = useState<boolean>(false);
   const [highscores, setHighscores] = useState<HighscoreItem[]>([]);
 
-  if (!rollingDice) {
-    console.log("diceValues", diceValues);
-    console.log("diceHeld", diceHeld);
-    console.log("scoreValues", scoreValues);
-    console.log("lockedScores", lockedScores);
+  if (__DEV__) {
+    if (!rollingDice) {
+      console.log("diceValues", diceValues);
+      console.log("diceHeld", diceHeld);
+      console.log("scoreValues", scoreValues);
+      console.log("lockedScores", lockedScores);
+    }
   }
 
   useEffect(() => {
@@ -106,11 +110,51 @@ export default function YahtzeeGame() {
   };
 
   const handleLockScore = async (index: number) => {
-    console.log(index);
+    if (rollingDice) {
+      return;
+    }
 
     setLockedScores((prev) => {
       const newLocked = [...prev];
       newLocked[index] = true;
+
+      console.log(newLocked);
+
+      setDiceHeld(Array(NUMBER_OF_DICE).fill(false));
+      setRollsLeft(3);
+
+      let newUpperScore = 0;
+      let newLowerScore = 0;
+      let isGameOver = true;
+      for (let i = 0; i < scoreValues.length; i++) {
+        if (i === index || newLocked[i]) {
+          if (i >= NUMBER_OF_UPPER_SCORES) {
+            newLowerScore += scoreValues[i];
+          } else {
+            newUpperScore += scoreValues[i];
+          }
+        } else {
+          isGameOver = false;
+        }
+      }
+
+      const UPPER_SCORE_BONUS_THRESHOLD = 63;
+      const BONUS_SCORE = 35;
+      if (newUpperScore >= UPPER_SCORE_BONUS_THRESHOLD) {
+        setBonusScore(BONUS_SCORE);
+      } else {
+        setBonusScore(0);
+      }
+
+      setUpperScoreTotal(newUpperScore);
+      setLowerScoreTotal(newLowerScore);
+
+      if (isGameOver) {
+        setGameOver(true);
+      }
+
+      setRollingDice(true);
+
       return newLocked;
     });
   };
@@ -134,7 +178,7 @@ export default function YahtzeeGame() {
 
     const newScores = [...scoreValues];
 
-    const totalDiceValue = diceValues.reduce((acc, curr) => acc + curr, 0);
+    const totalDiceValue = diceValues.reduce((acc, curr) => acc + curr + 1, 0);
 
     // One - Six
     for (let i = 0; i < diceFaceCount.length; i++) {
@@ -230,27 +274,37 @@ export default function YahtzeeGame() {
     }
 
     setScoreValues([...newScores]);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diceValues, rollingDice]);
 
-  const rollDice = useCallback(async () => {
+  useEffect(() => {
+    if (!rollingDice) {
+      return;
+    }
+
     const newDiceValues = [...diceValues];
 
-    setRollingDice(true);
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < NUMBER_OF_DICE; j++) {
-        if (!diceHeld[j]) {
-          newDiceValues[j] = Math.floor(Math.random() * 6);
-        }
-      }
-      setDiceValues([...newDiceValues]);
-
-      await new Promise((res) => setTimeout(res, 150));
-    }
-    setRollingDice(false);
-
     setRollsLeft((prev) => prev - 1);
-  }, [diceHeld, diceValues]);
+
+    const animateDice = async () => {
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < NUMBER_OF_DICE; j++) {
+          if (!diceHeld[j]) {
+            newDiceValues[j] = Math.floor(Math.random() * 6);
+          }
+        }
+        setDiceValues([...newDiceValues]);
+
+        await new Promise((res) => setTimeout(res, 150));
+      }
+      setRollingDice(false);
+    };
+
+    animateDice();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rollingDice]);
 
   const restartGame = useCallback(() => {
     setDiceValues(Array(NUMBER_OF_DICE).fill(0));
@@ -259,11 +313,16 @@ export default function YahtzeeGame() {
     setLockedScores(Array(NUMBER_OF_SCORES).fill(false));
     setRollsLeft(3);
 
-    rollDice();
-  }, [rollDice]);
+    setUpperScoreTotal(0);
+    setLowerScoreTotal(0);
+    setBonusScore(0);
+    setGameOver(false);
+
+    setRollingDice(true);
+  }, []);
 
   return (
-    <>
+    <View style={styles.screenContainer}>
       <View style={styles.titleBanner}>
         <TouchableOpacity
           onPress={handleNewGame}
@@ -284,7 +343,9 @@ export default function YahtzeeGame() {
           style={styles.newGameButton}
           disabled={rollingDice || gameOver}
         >
-          <Text style={styles.newGameButtonText}>Highscores</Text>
+          <Text style={styles.newGameButtonText}>
+            {showHighscore ? "    Game    " : "Highscore"}
+          </Text>
         </TouchableOpacity>
       </View>
       <View>
@@ -306,12 +367,6 @@ export default function YahtzeeGame() {
                 </View>
               )}
             />
-            <TouchableOpacity
-              onPress={() => setShowHighscore(false)}
-              style={highscoreStyles.closeButton}
-            >
-              <Text style={highscoreStyles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
           </View>
         ) : (
           <Scores
@@ -324,7 +379,7 @@ export default function YahtzeeGame() {
           />
         )}
       </View>
-      <View style={styles.dice}>
+      <View>
         <View style={styles.diceContainer}>
           {diceValues.map((value, index) => (
             <Pressable
@@ -344,7 +399,7 @@ export default function YahtzeeGame() {
           ))}
         </View>
         <TouchableOpacity
-          onPress={rollDice}
+          onPress={() => setRollingDice(true)}
           disabled={rollsLeft <= 0 || rollingDice || gameOver}
           style={[
             styles.rollButton,
@@ -360,21 +415,18 @@ export default function YahtzeeGame() {
           </Text>
         </TouchableOpacity>
       </View>
-    </>
+    </View>
   );
 }
 
 export const styles = StyleSheet.create({
   background: {
     backgroundColor: Orange,
-    flex: 1,
   },
   titleBanner: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginHorizontal: 10,
-    marginBottom: 40,
   },
   newGameButton: {
     backgroundColor: Red,
@@ -390,7 +442,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
   titleText: {
-    fontSize: 42,
+    fontSize: 32,
     color: Red,
     fontWeight: "bold",
     textAlign: "center",
@@ -415,22 +467,18 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    marginHorizontal: 10,
-    marginVertical: 5,
-    height: 120,
+    marginBottom: 25,
   },
   diceImage: {
-    width: 70,
-    height: 70,
+    width: 67,
+    height: 67,
   },
   rollButton: {
     backgroundColor: Red,
     paddingVertical: 15,
-    marginHorizontal: 10,
     borderRadius: 5,
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 10,
   },
   rollButtonText: {
     color: Orange,
@@ -461,13 +509,15 @@ export const styles = StyleSheet.create({
     transitionDuration: "150ms",
     transitionTimingFunction: "ease-out",
   },
+  screenContainer: {
+    display: "flex",
+    padding: 15,
+    height: "100%",
+    flexDirection: "column",
+    justifyContent: "space-between",
+  },
   diceButtonHeld: {
     transform: [{ translateY: 20 }],
-  },
-  dice: {
-    width: "100%",
-    position: "absolute",
-    bottom: 0,
   },
 });
 
