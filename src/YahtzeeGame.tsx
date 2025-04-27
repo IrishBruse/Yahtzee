@@ -176,7 +176,14 @@ export default function YahtzeeGame() {
       diceFaceCount[element]++;
     }
 
-    const newScores = [...scoreValues];
+    // Zero out values that are not locked
+    const newScores = scoreValues.map((val, i) => {
+      if (!lockedScores[i]) {
+        return 0;
+      } else {
+        return val;
+      }
+    });
 
     const totalDiceValue = diceValues.reduce((acc, curr) => acc + curr + 1, 0);
 
@@ -190,19 +197,17 @@ export default function YahtzeeGame() {
     }
 
     // Three of a kind
-    if (
-      !lockedScores[THREE_OF_A_KIND_INDEX] &&
-      diceFaceCount.some((count) => count >= 3)
-    ) {
-      newScores[THREE_OF_A_KIND_INDEX] = totalDiceValue;
+    if (!lockedScores[THREE_OF_A_KIND_INDEX]) {
+      if (diceFaceCount.some((count) => count >= 3)) {
+        newScores[THREE_OF_A_KIND_INDEX] = totalDiceValue;
+      }
     }
 
     // Four of a kind
-    if (
-      !lockedScores[FOUR_OF_A_KIND_INDEX] &&
-      diceFaceCount.some((count) => count >= 4)
-    ) {
-      newScores[FOUR_OF_A_KIND_INDEX] = totalDiceValue;
+    if (!lockedScores[FOUR_OF_A_KIND_INDEX]) {
+      if (diceFaceCount.some((count) => count >= 4)) {
+        newScores[FOUR_OF_A_KIND_INDEX] = totalDiceValue;
+      }
     }
 
     // Full House
@@ -211,8 +216,6 @@ export default function YahtzeeGame() {
     if (!lockedScores[FULL_HOUSE_INDEX]) {
       if (hasThree && hasTwo) {
         newScores[FULL_HOUSE_INDEX] = FULL_HOUSE_SCORE;
-      } else {
-        newScores[FULL_HOUSE_INDEX] = 0;
       }
     }
 
@@ -234,8 +237,6 @@ export default function YahtzeeGame() {
 
       if (hasSmallStraight) {
         newScores[SMALL_STRAIGHT_INDEX] = SMALL_STRAIGHT_SCORE;
-      } else {
-        newScores[SMALL_STRAIGHT_INDEX] = 0;
       }
     }
 
@@ -254,8 +255,6 @@ export default function YahtzeeGame() {
           diceFaceCount[5] === 1);
       if (isLargeStraight) {
         newScores[LARGE_STRAIGHT_INDEX] = LARGE_STRAIGHT_SCORE;
-      } else {
-        newScores[LARGE_STRAIGHT_INDEX] = 0;
       }
     }
 
@@ -268,8 +267,6 @@ export default function YahtzeeGame() {
     if (!lockedScores[YAHTZEE_INDEX]) {
       if (diceFaceCount.some((count) => count === 5)) {
         newScores[YAHTZEE_INDEX] = YAHTZEE_SCORE;
-      } else {
-        newScores[YAHTZEE_INDEX] = 0;
       }
     }
 
@@ -299,6 +296,7 @@ export default function YahtzeeGame() {
         await new Promise((res) => setTimeout(res, 150));
       }
       setRollingDice(false);
+      // setDiceValues([0, 0, 1, 1, 2]);
     };
 
     animateDice();
@@ -470,8 +468,8 @@ export const styles = StyleSheet.create({
     marginBottom: 25,
   },
   diceImage: {
-    width: 67,
-    height: 67,
+    width: 60,
+    height: 60,
   },
   rollButton: {
     backgroundColor: Red,
