@@ -2,6 +2,12 @@
 
 A mobile Yahtzee game written with Expo and React Native.
 
+## Screenshot
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/a8c14d78-922d-4f98-9736-065466596d7b" alt="Yahtzee Game Screenshot">
+</div>
+
 ## Features
 
 - Play the classic game of Yahtzee anywhere on your mobile device.
